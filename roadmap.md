@@ -1,6 +1,7 @@
 # Roadmap
 
-- [ ] Build the requested streetwear storefront with the five apparel categories, search, sorting, product details, gallery, variants, and cart.
-- [ ] Add secure customer authentication, order history/checkout, and a hidden admin workspace for order and inventory management.
-- [ ] Keep the project compatible with GitHub export and Vercel deployment; do not use Shopify.
-- [ ] Verify route metadata, mobile presentation, and the storefront's primary flow.
+- [ ] Build the storefront UI first: home, five-category shop, product detail, variant selection, and a usable cart.
+- [ ] Add a clear checkout preview that does not submit or accept payment until the user requests the database stage.
+- [ ] After the storefront UI, resume Supabase authentication, secure checkout, order history, and hidden admin tools.
+- [ ] Keep the project compatible with GitHub export and Vercel; do not use Shopify.
+- [ ] Verify route metadata, mobile layout, and the add-to-cart flow.

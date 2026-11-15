@@ -28,3 +28,7 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+## Storefront architecture
+
+- Keep pages in `src/routes` for TanStack file-based routing; organize reusable navigation, product, and cart UI under `src/components`, browser-only state in `src/hooks`, and shared product types/catalog rules in `src/types` and `src/lib`. This separates the storefront from the database and keeps its first version ready for the later integration stage.
