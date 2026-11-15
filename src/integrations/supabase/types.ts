@@ -100,6 +100,7 @@ export type Database = {
       }
       orders: {
         Row: {
+          checkout_items: Json | null
           created_at: string
           currency: string
           id: string
@@ -119,6 +120,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          checkout_items?: Json | null
           created_at?: string
           currency?: string
           id?: string
@@ -138,6 +140,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          checkout_items?: Json | null
           created_at?: string
           currency?: string
           id?: string
@@ -243,18 +246,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      create_order_with_items: {
-        Args: {
-          p_items: Json
-          p_shipping_address: string
-          p_shipping_city: string
-          p_shipping_country: string
-          p_shipping_email: string
-          p_shipping_name: string
-          p_shipping_postal_code: string
-        }
-        Returns: string
-      }
       has_role: { Args: { _role: string }; Returns: boolean }
     }
     Enums: {
