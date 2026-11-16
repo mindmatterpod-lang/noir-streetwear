@@ -19,6 +19,8 @@ export interface Product {
   createdAt: string;
   stock: number;
   badge?: string;
+  /** Supabase product uuid, present when loaded from the database. */
+  dbId?: string;
 }
 
 export interface CartItem {

@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import { QueryClient } from "@tanstack/react-query";
 import { createRouter, rootRouteId } from "@tanstack/react-router";
 import { describe, expect, it } from "vitest";
@@ -13,5 +15,23 @@ describe("App routing", () => {
     const matches = router.matchRoutes("/");
 
     expect(matches.at(-1)?.routeId).not.toBe(rootRouteId);
+  });
+
+  it.each([
+    "/shop",
+    "/product/studio-hoodie",
+    "/cart",
+    "/checkout",
+    "/login",
+    "/account",
+    "/admin-portal",
+  ])("matches a page for %s", (path) => {
+    const router = createRouter({ routeTree, context: { queryClient: new QueryClient() } });
+    expect(router.matchRoutes(path).at(-1)?.routeId).not.toBe(rootRouteId);
+  });
+
+  it("does not link the hidden admin route from public navigation", () => {
+    const layout = readFileSync("src/components/layout/SiteLayout.tsx", "utf8");
+    expect(layout).not.toMatch(/admin/i);
   });
 });
