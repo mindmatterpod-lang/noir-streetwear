@@ -21,6 +21,8 @@ export interface Product {
   badge?: string;
   /** Supabase product uuid, present when loaded from the database. */
   dbId?: string;
+  /** Gallery images (uploaded by admins); falls back to image + alternateImage. */
+  images?: string[];
 }
 
 export interface CartItem {

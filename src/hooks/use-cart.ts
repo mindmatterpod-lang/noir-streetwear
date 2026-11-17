@@ -16,11 +16,17 @@ function notify() {
 function isCartItem(value: unknown): value is CartItem {
   if (typeof value !== "object" || value === null) return false;
   const item = value as Partial<CartItem>;
-  return typeof item.productId === "string" &&
-    typeof item.size === "string" && ["S", "M", "L", "XL", "XXL"].includes(item.size) &&
-    typeof item.color === "string" && ["ink", "cherry", "fern", "cloud", "navy"].includes(item.color) &&
-    typeof item.quantity === "number" && Number.isInteger(item.quantity) && item.quantity >= 1 && item.quantity <= 5 &&
-    getProduct(item.productId) !== undefined;
+  return (
+    typeof item.productId === "string" &&
+    typeof item.size === "string" &&
+    ["S", "M", "L", "XL", "XXL"].includes(item.size) &&
+    typeof item.color === "string" &&
+    ["ink", "cherry", "fern", "cloud", "navy"].includes(item.color) &&
+    typeof item.quantity === "number" &&
+    Number.isInteger(item.quantity) &&
+    item.quantity >= 1 &&
+    item.quantity <= 5
+  );
 }
 
 function initializeCart() {
@@ -97,8 +103,13 @@ export function useCart() {
       const existing = cartSnapshot.find((item) => itemKey(item) === key);
       const nextQuantity = Math.min(product.stock, 5, (existing?.quantity ?? 0) + quantity);
       const next = existing
-        ? cartSnapshot.map((item) => itemKey(item) === key ? { ...item, quantity: nextQuantity } : item)
-        : [...cartSnapshot, { productId: product.id, size, color, quantity: Math.min(quantity, 5, product.stock) }];
+        ? cartSnapshot.map((item) =>
+            itemKey(item) === key ? { ...item, quantity: nextQuantity } : item,
+          )
+        : [
+            ...cartSnapshot,
+            { productId: product.id, size, color, quantity: Math.min(quantity, 5, product.stock) },
+          ];
       commitCart(next);
     },
     setQuantity: (productId: string, size: ProductSize, color: ProductColor, quantity: number) => {
@@ -109,7 +120,11 @@ export function useCart() {
       }
       const product = getProduct(productId);
       const cap = Math.min(product?.stock ?? 5, 5);
-      commitCart(cartSnapshot.map((item) => itemKey(item) === key ? { ...item, quantity: Math.min(quantity, cap) } : item));
+      commitCart(
+        cartSnapshot.map((item) =>
+          itemKey(item) === key ? { ...item, quantity: Math.min(quantity, cap) } : item,
+        ),
+      );
     },
     removeItem: (productId: string, size: ProductSize, color: ProductColor) => {
       const key = `${productId}:${size}:${color}`;

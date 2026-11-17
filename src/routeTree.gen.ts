@@ -14,8 +14,17 @@ import { Route as AdminPortalRouteImport } from './routes/admin-portal'
 import { Route as CartRouteImport } from './routes/cart'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as ShopRouteImport } from './routes/shop'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as WishlistRouteImport } from './routes/wishlist'
 import { Route as AccountIndexRouteImport } from './routes/account/index'
+import { Route as ApiCheckoutRouteImport } from './routes/api/checkout'
+import { Route as ApiConfigRouteImport } from './routes/api/config'
+import { Route as ApiOrderStatusRouteImport } from './routes/api/order-status'
+import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe-webhook'
+import { Route as OrderIdRouteImport } from './routes/order/$id'
+import { Route as PoliciesSlugRouteImport } from './routes/policies/$slug'
 import { Route as ProductSlugRouteImport } from './routes/product/$slug'
 
 const IndexRoute = IndexRouteImport.update({
@@ -43,14 +52,59 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
+  id: '/robots.txt',
+  path: '/robots.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ShopRoute = ShopRouteImport.update({
   id: '/shop',
   path: '/shop',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WishlistRoute = WishlistRouteImport.update({
+  id: '/wishlist',
+  path: '/wishlist',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AccountIndexRoute = AccountIndexRouteImport.update({
   id: '/account/',
   path: '/account/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCheckoutRoute = ApiCheckoutRouteImport.update({
+  id: '/api/checkout',
+  path: '/api/checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiConfigRoute = ApiConfigRouteImport.update({
+  id: '/api/config',
+  path: '/api/config',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiOrderStatusRoute = ApiOrderStatusRouteImport.update({
+  id: '/api/order-status',
+  path: '/api/order-status',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
+  id: '/api/stripe-webhook',
+  path: '/api/stripe-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrderIdRoute = OrderIdRouteImport.update({
+  id: '/order/$id',
+  path: '/order/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PoliciesSlugRoute = PoliciesSlugRouteImport.update({
+  id: '/policies/$slug',
+  path: '/policies/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProductSlugRoute = ProductSlugRouteImport.update({
@@ -65,7 +119,16 @@ export interface FileRoutesByFullPath {
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/login': typeof LoginRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/shop': typeof ShopRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/wishlist': typeof WishlistRoute
+  '/api/checkout': typeof ApiCheckoutRoute
+  '/api/config': typeof ApiConfigRoute
+  '/api/order-status': typeof ApiOrderStatusRoute
+  '/api/stripe-webhook': typeof ApiStripeWebhookRoute
+  '/order/$id': typeof OrderIdRoute
+  '/policies/$slug': typeof PoliciesSlugRoute
   '/product/$slug': typeof ProductSlugRoute
   '/account/': typeof AccountIndexRoute
 }
@@ -75,7 +138,16 @@ export interface FileRoutesByTo {
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/login': typeof LoginRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/shop': typeof ShopRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/wishlist': typeof WishlistRoute
+  '/api/checkout': typeof ApiCheckoutRoute
+  '/api/config': typeof ApiConfigRoute
+  '/api/order-status': typeof ApiOrderStatusRoute
+  '/api/stripe-webhook': typeof ApiStripeWebhookRoute
+  '/order/$id': typeof OrderIdRoute
+  '/policies/$slug': typeof PoliciesSlugRoute
   '/product/$slug': typeof ProductSlugRoute
   '/account': typeof AccountIndexRoute
 }
@@ -86,7 +158,16 @@ export interface FileRoutesById {
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/login': typeof LoginRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/shop': typeof ShopRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/wishlist': typeof WishlistRoute
+  '/api/checkout': typeof ApiCheckoutRoute
+  '/api/config': typeof ApiConfigRoute
+  '/api/order-status': typeof ApiOrderStatusRoute
+  '/api/stripe-webhook': typeof ApiStripeWebhookRoute
+  '/order/$id': typeof OrderIdRoute
+  '/policies/$slug': typeof PoliciesSlugRoute
   '/product/$slug': typeof ProductSlugRoute
   '/account/': typeof AccountIndexRoute
 }
@@ -98,7 +179,16 @@ export interface FileRouteTypes {
     | '/cart'
     | '/checkout'
     | '/login'
+    | '/robots.txt'
     | '/shop'
+    | '/sitemap.xml'
+    | '/wishlist'
+    | '/api/checkout'
+    | '/api/config'
+    | '/api/order-status'
+    | '/api/stripe-webhook'
+    | '/order/$id'
+    | '/policies/$slug'
     | '/product/$slug'
     | '/account/'
   fileRoutesByTo: FileRoutesByTo
@@ -108,7 +198,16 @@ export interface FileRouteTypes {
     | '/cart'
     | '/checkout'
     | '/login'
+    | '/robots.txt'
     | '/shop'
+    | '/sitemap.xml'
+    | '/wishlist'
+    | '/api/checkout'
+    | '/api/config'
+    | '/api/order-status'
+    | '/api/stripe-webhook'
+    | '/order/$id'
+    | '/policies/$slug'
     | '/product/$slug'
     | '/account'
   id:
@@ -118,7 +217,16 @@ export interface FileRouteTypes {
     | '/cart'
     | '/checkout'
     | '/login'
+    | '/robots.txt'
     | '/shop'
+    | '/sitemap.xml'
+    | '/wishlist'
+    | '/api/checkout'
+    | '/api/config'
+    | '/api/order-status'
+    | '/api/stripe-webhook'
+    | '/order/$id'
+    | '/policies/$slug'
     | '/product/$slug'
     | '/account/'
   fileRoutesById: FileRoutesById
@@ -129,7 +237,16 @@ export interface RootRouteChildren {
   CartRoute: typeof CartRoute
   CheckoutRoute: typeof CheckoutRoute
   LoginRoute: typeof LoginRoute
+  RobotsDottxtRoute: typeof RobotsDottxtRoute
   ShopRoute: typeof ShopRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  WishlistRoute: typeof WishlistRoute
+  ApiCheckoutRoute: typeof ApiCheckoutRoute
+  ApiConfigRoute: typeof ApiConfigRoute
+  ApiOrderStatusRoute: typeof ApiOrderStatusRoute
+  ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
+  OrderIdRoute: typeof OrderIdRoute
+  PoliciesSlugRoute: typeof PoliciesSlugRoute
   ProductSlugRoute: typeof ProductSlugRoute
   AccountIndexRoute: typeof AccountIndexRoute
 }
@@ -171,6 +288,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/robots.txt': {
+      id: '/robots.txt'
+      path: '/robots.txt'
+      fullPath: '/robots.txt'
+      preLoaderRoute: typeof RobotsDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/shop': {
       id: '/shop'
       path: '/shop'
@@ -178,11 +302,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShopRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/wishlist': {
+      id: '/wishlist'
+      path: '/wishlist'
+      fullPath: '/wishlist'
+      preLoaderRoute: typeof WishlistRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/account/': {
       id: '/account/'
       path: '/account'
       fullPath: '/account/'
       preLoaderRoute: typeof AccountIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/checkout': {
+      id: '/api/checkout'
+      path: '/api/checkout'
+      fullPath: '/api/checkout'
+      preLoaderRoute: typeof ApiCheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/config': {
+      id: '/api/config'
+      path: '/api/config'
+      fullPath: '/api/config'
+      preLoaderRoute: typeof ApiConfigRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/order-status': {
+      id: '/api/order-status'
+      path: '/api/order-status'
+      fullPath: '/api/order-status'
+      preLoaderRoute: typeof ApiOrderStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/stripe-webhook': {
+      id: '/api/stripe-webhook'
+      path: '/api/stripe-webhook'
+      fullPath: '/api/stripe-webhook'
+      preLoaderRoute: typeof ApiStripeWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/order/$id': {
+      id: '/order/$id'
+      path: '/order/$id'
+      fullPath: '/order/$id'
+      preLoaderRoute: typeof OrderIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/policies/$slug': {
+      id: '/policies/$slug'
+      path: '/policies/$slug'
+      fullPath: '/policies/$slug'
+      preLoaderRoute: typeof PoliciesSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/product/$slug': {
@@ -201,7 +381,16 @@ const rootRouteChildren: RootRouteChildren = {
   CartRoute: CartRoute,
   CheckoutRoute: CheckoutRoute,
   LoginRoute: LoginRoute,
+  RobotsDottxtRoute: RobotsDottxtRoute,
   ShopRoute: ShopRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
+  WishlistRoute: WishlistRoute,
+  ApiCheckoutRoute: ApiCheckoutRoute,
+  ApiConfigRoute: ApiConfigRoute,
+  ApiOrderStatusRoute: ApiOrderStatusRoute,
+  ApiStripeWebhookRoute: ApiStripeWebhookRoute,
+  OrderIdRoute: OrderIdRoute,
+  PoliciesSlugRoute: PoliciesSlugRoute,
   ProductSlugRoute: ProductSlugRoute,
   AccountIndexRoute: AccountIndexRoute,
 }

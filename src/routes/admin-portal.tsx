@@ -2,7 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { OrdersPanel } from "@/components/admin/OrdersPanel";
+import { DiscountsPanel } from "@/components/admin/DiscountsPanel";
 import { ProductsPanel } from "@/components/admin/ProductsPanel";
+import { SettingsPanel } from "@/components/admin/SettingsPanel";
 import { Button } from "@/components/ui/button";
 import { useAuth, useIsAdmin } from "@/hooks/use-auth";
 
@@ -34,7 +36,7 @@ function FakeNotFound() {
 function AdminPortal() {
   const { user, loading } = useAuth();
   const { isAdmin, checked } = useIsAdmin(user?.id);
-  const [tab, setTab] = useState<"orders" | "products">("orders");
+  const [tab, setTab] = useState<"orders" | "products" | "discounts" | "settings">("orders");
   const { signOut } = useAuth();
 
   if (loading || !checked) return <div className="min-h-screen bg-background" />;
@@ -50,7 +52,7 @@ function AdminPortal() {
         </Button>
       </div>
       <div className="mt-6 flex gap-2">
-        {(["orders", "products"] as const).map((t) => (
+        {(["orders", "products", "discounts", "settings"] as const).map((t) => (
           <Button
             key={t}
             variant={tab === t ? "default" : "outline"}
@@ -61,7 +63,17 @@ function AdminPortal() {
           </Button>
         ))}
       </div>
-      <div className="mt-6">{tab === "orders" ? <OrdersPanel /> : <ProductsPanel />}</div>
+      <div className="mt-6">
+        {tab === "orders" ? (
+          <OrdersPanel />
+        ) : tab === "products" ? (
+          <ProductsPanel />
+        ) : tab === "discounts" ? (
+          <DiscountsPanel />
+        ) : (
+          <SettingsPanel />
+        )}
+      </div>
     </div>
   );
 }

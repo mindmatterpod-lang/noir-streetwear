@@ -5,7 +5,30 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { db } from "@/lib/db";
 import { formatPrice } from "@/lib/format";
+
+interface AdminOrder {
+  id: string;
+  status: string;
+  payment_method: string;
+  payment_status: string;
+  total_cents: number;
+  tracking_number: string | null;
+  created_at: string;
+  shipping_name: string;
+  shipping_email: string;
+  shipping_address: string;
+  shipping_city: string;
+  shipping_country: string;
+  order_items: {
+    id: string;
+    product_name: string;
+    size: string;
+    color: string;
+    quantity: number;
+  }[];
+}
 
 const NEXT: Record<string, string[]> = {
   pending: ["processing", "cancelled"],
@@ -26,14 +49,14 @@ export function OrdersPanel() {
     queryKey: ["admin-orders"],
     refetchInterval: 15_000,
     queryFn: async () => {
-      const { data, error: e } = await supabase
+      const { data, error: e } = await db
         .from("orders")
         .select(
-          "id, status, total_cents, tracking_number, created_at, shipping_name, shipping_email, shipping_address, shipping_city, shipping_country, order_items(id, product_name, size, color, quantity)",
+          "id, status, payment_method, payment_status, total_cents, tracking_number, created_at, shipping_name, shipping_email, shipping_address, shipping_city, shipping_country, order_items(id, product_name, size, color, quantity)",
         )
         .order("created_at", { ascending: false });
       if (e) throw e;
-      return data;
+      return data as unknown as AdminOrder[];
     },
   });
 
@@ -76,7 +99,9 @@ export function OrdersPanel() {
             <span className="font-medium">
               #{o.id.slice(0, 8)} · {o.shipping_name} · {o.shipping_email}
             </span>
-            <span className="uppercase tracking-widest">{o.status}</span>
+            <span className="uppercase tracking-widest">
+              {o.status} · {o.payment_method === "cod" ? "COD" : "card"} · {o.payment_status}
+            </span>
           </div>
           <p className="text-muted-foreground">
             {o.shipping_address}, {o.shipping_city}, {o.shipping_country}

@@ -4,10 +4,12 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { SiteLayout } from "@/components/layout/SiteLayout";
+import { Reviews } from "@/components/shop/Reviews";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/use-cart";
 import { setCartOpen } from "@/hooks/use-cart-drawer";
 import { formatPrice } from "@/lib/format";
+import { fetchProducts } from "@/lib/products-api";
 import { getProduct } from "@/lib/store-catalog";
 import { COLOR_NAMES, PRODUCT_SIZES, type ProductColor, type ProductSize } from "@/types/store";
 
@@ -20,17 +22,47 @@ const SWATCH: Record<ProductColor, string> = {
 };
 
 export const Route = createFileRoute("/product/$slug")({
-  loader: ({ params }) => {
+  loader: async ({ params }) => {
+    await fetchProducts().catch(() => []);
     const product = getProduct(params.slug);
     if (!product) throw notFound();
     return { product };
   },
-  head: ({ loaderData }) => ({
-    meta: [
-      { title: `${loaderData?.product.name ?? "Product"} — Noir Streetwear` },
-      { name: "description", content: loaderData?.product.description.slice(0, 155) ?? "" },
-    ],
-  }),
+  head: ({ loaderData }) => {
+    const product = loaderData?.product;
+    return {
+      meta: [
+        { title: `${product?.name ?? "Product"} — Noir Streetwear` },
+        { name: "description", content: product?.description.slice(0, 155) ?? "" },
+        { property: "og:title", content: product?.name ?? "Product" },
+        { property: "og:type", content: "product" },
+      ],
+      scripts: product
+        ? [
+            {
+              type: "application/ld+json",
+              children: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "Product",
+                name: product.name,
+                description: product.description,
+                category: product.category,
+                sku: product.slug,
+                offers: {
+                  "@type": "Offer",
+                  priceCurrency: "USD",
+                  price: (product.priceCents / 100).toFixed(2),
+                  availability:
+                    product.stock > 0
+                      ? "https://schema.org/InStock"
+                      : "https://schema.org/OutOfStock",
+                },
+              }),
+            },
+          ]
+        : [],
+    };
+  },
   notFoundComponent: () => (
     <SiteLayout>
       <div className="py-24 text-center">
@@ -54,7 +86,10 @@ function ProductDetail() {
   const [size, setSize] = useState<ProductSize | null>(null);
   const [color, setColor] = useState<ProductColor>(product.colors[0] ?? "ink");
   const [added, setAdded] = useState(false);
-  const gallery = [product.image, ...(product.alternateImage ? [product.alternateImage] : [])];
+  const gallery = product.images ?? [
+    product.image,
+    ...(product.alternateImage ? [product.alternateImage] : []),
+  ];
   const [active, setActive] = useState(0);
   const soldOut = product.stock === 0;
   const lowStock = product.stock > 0 && product.stock <= 10;
@@ -160,6 +195,7 @@ function ProductDetail() {
           <p className="mt-4 text-xs text-muted-foreground">Free shipping on every order.</p>
         </div>
       </div>
+      <Reviews productId={product.dbId} productName={product.name} />
     </SiteLayout>
   );
 }

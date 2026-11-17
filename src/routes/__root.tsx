@@ -8,6 +8,8 @@ import {
   Scripts,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
+import { inject } from "@vercel/analytics";
+import { injectSpeedInsights } from "@vercel/speed-insights";
 import { useEffect, type ReactNode } from "react";
 
 import { Toaster } from "@/components/ui/sonner";
@@ -83,12 +85,24 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Noir Streetwear" },
-      { name: "description", content: "Noir — modern streetwear: hoodies, tracksuits, jackets, trousers and shirts." },
+      {
+        name: "description",
+        content: "Noir — modern streetwear: hoodies, tracksuits, jackets, trousers and shirts.",
+      },
       { name: "author", content: "Noir Streetwear" },
       { property: "og:title", content: "Noir Streetwear" },
-      { property: "og:description", content: "Modern streetwear: hoodies, tracksuits, jackets, trousers and shirts." },
+      {
+        property: "og:description",
+        content: "Modern streetwear: hoodies, tracksuits, jackets, trousers and shirts.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+    ],
+    scripts: [
+      {
+        children:
+          "try{var t=localStorage.getItem('noir-theme');if(t==='dark'||(!t&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(e){}",
+      },
     ],
     links: [
       {
@@ -106,7 +120,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
@@ -120,6 +134,10 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useEffect(() => {
+    inject();
+    injectSpeedInsights();
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

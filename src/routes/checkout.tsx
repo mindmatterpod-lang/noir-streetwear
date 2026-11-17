@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
@@ -6,10 +7,12 @@ import { SiteLayout } from "@/components/layout/SiteLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuth } from "@/hooks/use-auth";
 import { useCart } from "@/hooks/use-cart";
 import { supabase } from "@/integrations/supabase/client";
+import { db } from "@/lib/db";
 import { formatPrice } from "@/lib/format";
+import { computeTotals } from "@/lib/pricing";
+import { useStoreSettings } from "@/lib/store-settings";
 import { getProduct } from "@/lib/store-catalog";
 import { COLOR_NAMES } from "@/types/store";
 
@@ -21,71 +24,104 @@ export const Route = createFileRoute("/checkout")({
 });
 
 const FIELDS = [
-  { key: "shipping_name", label: "Full name", autoComplete: "name" },
-  { key: "shipping_email", label: "Email", autoComplete: "email", type: "email" },
-  { key: "shipping_address", label: "Address", autoComplete: "street-address" },
-  { key: "shipping_city", label: "City", autoComplete: "address-level2" },
-  { key: "shipping_postal_code", label: "Postal code", autoComplete: "postal-code" },
-  { key: "shipping_country", label: "Country", autoComplete: "country-name" },
+  { key: "name", label: "Full name", autoComplete: "name" },
+  { key: "email", label: "Email", autoComplete: "email", type: "email" },
+  { key: "address", label: "Address", autoComplete: "street-address" },
+  { key: "city", label: "City", autoComplete: "address-level2" },
+  { key: "postal_code", label: "Postal code", autoComplete: "postal-code" },
+  { key: "country", label: "Country", autoComplete: "country-name" },
 ] as const;
 
 function Checkout() {
   const { items, subtotalCents, clearCart } = useCart();
-  const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const { data: settings } = useStoreSettings();
+  const { data: config } = useQuery({
+    queryKey: ["api-config"],
+    staleTime: 300_000,
+    queryFn: async () => (await fetch("/api/config")).json() as Promise<{ card: boolean }>,
+  });
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState<Record<string, string>>({});
+  const [method, setMethod] = useState<"cod" | "card">("cod");
+  const [codeInput, setCodeInput] = useState("");
+  const [applied, setApplied] = useState<{ code: string; cents: number } | null>(null);
 
-  const field = (key: string) => form[key] ?? "";
+  const codAllowed = settings?.cod_enabled ?? true;
+  const cardAllowed = config?.card ?? false;
+  const effectiveMethod = method === "cod" && !codAllowed && cardAllowed ? "card" : method;
+  const totals = computeTotals(
+    subtotalCents,
+    applied?.cents ?? 0,
+    settings ?? {
+      shipping_flat_cents: 800,
+      free_shipping_threshold_cents: 15000,
+      tax_rate_bps: 0,
+      cod_enabled: true,
+    },
+  );
+
+  const applyCode = async () => {
+    const { data, error } = await db.rpc("preview_discount", {
+      p_code: codeInput,
+      p_subtotal: subtotalCents,
+    });
+    if (error) {
+      setApplied(null);
+      toast.error(error.message.replace(/^.*?:\s*/, ""));
+      return;
+    }
+    setApplied({ code: codeInput.trim().toUpperCase(), cents: data as number });
+    toast.success("Discount applied");
+  };
 
   const placeOrder = async (e: FormEvent) => {
     e.preventDefault();
-    if (!user) return;
     setBusy(true);
     try {
-      // Cart lines are keyed by slug; the database needs product uuids, and re-prices every line itself.
-      const merged = new Map<
-        string,
-        { product_id: string; size: string; color: string; quantity: number }
-      >();
-      const { data: rows, error: lookupError } = await supabase
-        .from("products")
-        .select("id, slug")
-        .in(
-          "slug",
-          items.map((i) => i.productId),
-        );
-      if (lookupError) throw lookupError;
-      for (const item of items) {
-        const id = rows?.find((r) => r.slug === item.productId)?.id;
-        if (!id) throw new Error("An item in your bag is no longer available.");
-        if (merged.has(id))
-          throw new Error(
-            "Each piece can only appear once per order — adjust the size or colour lines in your bag.",
-          );
-        merged.set(id, {
-          product_id: id,
-          size: item.size,
-          color: item.color,
-          quantity: item.quantity,
-        });
-      }
-      const { error } = await supabase.from("orders").insert({
-        user_id: user.id,
-        shipping_name: field("shipping_name"),
-        shipping_email: field("shipping_email"),
-        shipping_address: field("shipping_address"),
-        shipping_city: field("shipping_city"),
-        shipping_postal_code: field("shipping_postal_code"),
-        shipping_country: field("shipping_country"),
-        subtotal_cents: subtotalCents,
-        total_cents: subtotalCents,
-        checkout_items: [...merged.values()],
+      const { data: session } = await supabase.auth.getSession();
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          ...(session.session ? { authorization: `Bearer ${session.session.access_token}` } : {}),
+        },
+        body: JSON.stringify({
+          items: items.map((i) => ({
+            slug: i.productId,
+            size: i.size,
+            color: i.color,
+            quantity: i.quantity,
+          })),
+          customer: {
+            name: form["name"] ?? "",
+            email: form["email"] ?? "",
+            address: form["address"] ?? "",
+            city: form["city"] ?? "",
+            postal_code: form["postal_code"] ?? "",
+            country: form["country"] ?? "",
+          },
+          code: applied?.code ?? null,
+          method: effectiveMethod,
+        }),
       });
-      if (error) throw error;
+      const result = (await response.json()) as {
+        error?: string;
+        url?: string;
+        orderId?: string;
+        token?: string;
+      };
+      if (!response.ok) throw new Error(result.error ?? "Could not place your order");
+      if (result.url) {
+        window.location.href = result.url;
+        return;
+      }
       clearCart();
-      toast.success("Order placed. We'll update its status as it progresses.");
-      await navigate({ to: "/account" });
+      await navigate({
+        to: "/order/$id",
+        params: { id: result.orderId ?? "" },
+        search: { token: result.token ?? "" },
+      });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not place your order");
     } finally {
@@ -98,11 +134,7 @@ function Checkout() {
       <SiteLayout>
         <div className="py-24 text-center">
           <p>Your bag is empty.</p>
-          <Link
-            to="/shop"
-            search={{ category: "All pieces" }}
-            className="mt-4 inline-block underline"
-          >
+          <Link to="/shop" search={{}} className="mt-4 inline-block underline">
             Continue shopping
           </Link>
         </div>
@@ -115,41 +147,70 @@ function Checkout() {
       <div className="mx-auto grid max-w-5xl gap-10 px-4 py-10 sm:px-6 md:grid-cols-2">
         <div>
           <h1 className="text-3xl font-black uppercase tracking-widest">Checkout</h1>
-          {loading ? null : !user ? (
-            <div className="mt-8 border border-border p-6">
-              <p className="text-sm">
-                Sign in or create an account to place your order and track it afterwards.
-              </p>
-              <Button asChild className="mt-4">
-                <Link to="/login" search={{ redirect: "/checkout" }}>
-                  Sign in to continue
-                </Link>
-              </Button>
-            </div>
-          ) : (
-            <form onSubmit={placeOrder} className="mt-8 space-y-4">
-              {FIELDS.map((f) => (
-                <div key={f.key}>
-                  <Label htmlFor={f.key}>{f.label}</Label>
-                  <Input
-                    id={f.key}
-                    required
-                    autoComplete={f.autoComplete}
-                    type={"type" in f ? f.type : "text"}
-                    value={form[f.key] ?? ""}
-                    onChange={(e) => setForm((prev) => ({ ...prev, [f.key]: e.target.value }))}
-                  />
-                </div>
-              ))}
-              <p className="text-xs text-muted-foreground">
-                Payments are not connected yet: placing an order records it for fulfilment and no
-                card is charged.
-              </p>
-              <Button type="submit" size="lg" className="w-full" disabled={busy}>
-                {busy ? "Placing order…" : `Place order · ${formatPrice(subtotalCents)}`}
-              </Button>
-            </form>
-          )}
+          <p className="mt-2 text-sm text-muted-foreground">
+            No account needed.{" "}
+            <Link to="/login" search={{ redirect: "/checkout" }} className="underline">
+              Sign in
+            </Link>{" "}
+            to save your order history.
+          </p>
+          <form onSubmit={placeOrder} className="mt-8 space-y-4">
+            {FIELDS.map((f) => (
+              <div key={f.key}>
+                <Label htmlFor={f.key}>{f.label}</Label>
+                <Input
+                  id={f.key}
+                  required
+                  autoComplete={f.autoComplete}
+                  type={"type" in f ? f.type : "text"}
+                  value={form[f.key] ?? ""}
+                  onChange={(e) => setForm((prev) => ({ ...prev, [f.key]: e.target.value }))}
+                />
+              </div>
+            ))}
+            <fieldset className="space-y-2 border border-border p-4">
+              <legend className="px-1 text-xs uppercase tracking-widest">Payment</legend>
+              {codAllowed && (
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="radio"
+                    name="pay"
+                    checked={effectiveMethod === "cod"}
+                    onChange={() => setMethod("cod")}
+                  />{" "}
+                  Cash on delivery
+                </label>
+              )}
+              {cardAllowed && (
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="radio"
+                    name="pay"
+                    checked={effectiveMethod === "card"}
+                    onChange={() => setMethod("card")}
+                  />{" "}
+                  Credit / debit card (secure checkout)
+                </label>
+              )}
+              {!codAllowed && !cardAllowed && (
+                <p className="text-sm text-destructive">
+                  No payment method is available right now. Please contact us.
+                </p>
+              )}
+            </fieldset>
+            <Button
+              type="submit"
+              size="lg"
+              className="w-full"
+              disabled={busy || (!codAllowed && !cardAllowed)}
+            >
+              {busy
+                ? "Please wait…"
+                : effectiveMethod === "card"
+                  ? `Pay ${formatPrice(totals.total)}`
+                  : `Place order · ${formatPrice(totals.total)}`}
+            </Button>
+          </form>
         </div>
         <aside className="h-fit border border-border p-6">
           <h2 className="text-sm uppercase tracking-widest">Summary</h2>
@@ -166,14 +227,46 @@ function Checkout() {
               ) : null;
             })}
           </ul>
+          <div className="mt-4 flex gap-2">
+            <Input
+              aria-label="Discount code"
+              placeholder="Discount code"
+              value={codeInput}
+              onChange={(e) => setCodeInput(e.target.value)}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!codeInput.trim()}
+              onClick={() => void applyCode()}
+            >
+              Apply
+            </Button>
+          </div>
           <div className="mt-4 space-y-1 border-t border-border pt-4 text-sm">
             <div className="flex justify-between">
-              <span>Shipping</span>
-              <span>Free</span>
+              <span>Subtotal</span>
+              <span>{formatPrice(totals.subtotal)}</span>
             </div>
+            {totals.discount > 0 && (
+              <div className="flex justify-between">
+                <span>Discount ({applied?.code})</span>
+                <span>−{formatPrice(totals.discount)}</span>
+              </div>
+            )}
+            <div className="flex justify-between">
+              <span>Shipping</span>
+              <span>{totals.shipping ? formatPrice(totals.shipping) : "Free"}</span>
+            </div>
+            {totals.tax > 0 && (
+              <div className="flex justify-between">
+                <span>Tax</span>
+                <span>{formatPrice(totals.tax)}</span>
+              </div>
+            )}
             <div className="flex justify-between font-medium">
               <span>Total</span>
-              <span>{formatPrice(subtotalCents)}</span>
+              <span>{formatPrice(totals.total)}</span>
             </div>
           </div>
         </aside>
