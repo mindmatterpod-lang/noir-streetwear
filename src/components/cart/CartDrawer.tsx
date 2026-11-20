@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useCart } from "@/hooks/use-cart";
 import { useCartDrawer } from "@/hooks/use-cart-drawer";
+import { optimizeImageUrl } from "@/lib/image-tools";
 import { formatPrice } from "@/lib/format";
 import { getProduct } from "@/lib/store-catalog";
 import { COLOR_NAMES } from "@/types/store";
@@ -21,7 +22,11 @@ export function CartLines() {
         if (!product) return null;
         return (
           <li key={`${item.productId}${item.size}${item.color}`} className="flex gap-4 py-4">
-            <img src={product.image} alt={product.name} className="h-24 w-20 object-cover" />
+            <img
+              src={optimizeImageUrl(product.image, 200)}
+              alt={product.name}
+              className="h-24 w-20 object-cover"
+            />
             <div className="flex flex-1 flex-col text-sm">
               <div className="flex justify-between gap-2">
                 <Link to="/product/$slug" params={{ slug: product.slug }} className="font-medium">

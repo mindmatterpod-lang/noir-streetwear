@@ -3,6 +3,7 @@ import { Heart } from "lucide-react";
 
 import { useWishlist } from "@/hooks/use-wishlist";
 
+import { optimizeImageUrl } from "@/lib/image-tools";
 import { formatPrice } from "@/lib/format";
 import type { Product } from "@/types/store";
 
@@ -14,14 +15,14 @@ export function ProductCard({ product }: { product: Product }) {
       <Link to="/product/$slug" params={{ slug: product.slug }} className="group block">
         <div className="relative aspect-[4/5] overflow-hidden bg-muted">
           <img
-            src={product.image}
+            src={optimizeImageUrl(product.image, 700)}
             alt={product.name}
             loading="lazy"
             className="size-full object-cover transition duration-500 group-hover:scale-105"
           />
           {product.alternateImage && (
             <img
-              src={product.alternateImage}
+              src={optimizeImageUrl(product.alternateImage, 700)}
               alt=""
               loading="lazy"
               className="absolute inset-0 size-full object-cover opacity-0 transition duration-500 group-hover:opacity-100"

@@ -6,11 +6,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { db } from "@/lib/db";
 import { formatPrice } from "@/lib/format";
+import {
+  optimizeImageUrl,
+  shrinkImage,
+  supabaseStoragePath,
+  validateImageUrl,
+} from "@/lib/image-tools";
 import { IMAGE_BY_KEY } from "@/lib/product-images";
 
 const COLORS = ["ink", "cherry", "fern", "cloud", "navy"];
 const STATUSES = ["draft", "published", "archived"];
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const MAX_RAW_BYTES = 15 * 1024 * 1024;
 
 interface Row {
   id: string;
@@ -23,11 +29,13 @@ interface Row {
   categories: { name: string } | null;
 }
 
+/** Uploads photos to Supabase after shrinking them (max 1600px WebP) so they use very little storage. */
 async function uploadImages(slug: string, files: FileList | File[]): Promise<string[]> {
   const urls: string[] = [];
-  for (const file of Array.from(files)) {
-    if (!file.type.startsWith("image/")) throw new Error(`${file.name} is not an image`);
-    if (file.size > MAX_IMAGE_BYTES) throw new Error(`${file.name} is larger than 5 MB`);
+  for (const original of Array.from(files)) {
+    if (!original.type.startsWith("image/")) throw new Error(`${original.name} is not an image`);
+    if (original.size > MAX_RAW_BYTES) throw new Error(`${original.name} is larger than 15 MB`);
+    const file = await shrinkImage(original);
     const path = `${slug}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
     const { error } = await db.storage
       .from("product-images")
@@ -36,6 +44,20 @@ async function uploadImages(slug: string, files: FileList | File[]): Promise<str
     urls.push(db.storage.from("product-images").getPublicUrl(path).data.publicUrl);
   }
   return urls;
+}
+
+/** Turns lines of pasted text into checked image links; throws a readable message for the first bad one. */
+function parseLinks(text: string): string[] {
+  const links: string[] = [];
+  for (const line of text
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean)) {
+    const check = validateImageUrl(line);
+    if (!check.ok) throw new Error(check.error);
+    links.push(check.url);
+  }
+  return links;
 }
 
 export function ProductsPanel() {
@@ -65,7 +87,9 @@ export function ProductsPanel() {
     },
   });
   const [draft, setDraft] = useState<Record<string, { price?: string; stock?: string }>>({});
+  const [linkDraft, setLinkDraft] = useState<Record<string, string>>({});
   const [newFiles, setNewFiles] = useState<File[]>([]);
+  const [newLinks, setNewLinks] = useState("");
   const [form, setForm] = useState({
     name: "",
     slug: "",
@@ -101,40 +125,61 @@ export function ProductsPanel() {
       toast.error("Could not delete (products in past orders should be archived instead).");
     else refresh();
   };
-  const addImages = async (row: Row, files: FileList | null) => {
+  const saveImages = async (row: Row, urls: string[], message: string) => {
+    const { error } = await db.from("products").update({ image_urls: urls }).eq("id", row.id);
+    if (error) toast.error(error.message);
+    else {
+      toast.success(message);
+      refresh();
+    }
+  };
+  const addUploads = async (row: Row, files: FileList | null) => {
     if (!files?.length) return;
     try {
-      const urls = await uploadImages(row.slug, files);
-      const { error } = await db
-        .from("products")
-        .update({ image_urls: [...row.image_urls, ...urls] })
-        .eq("id", row.id);
-      if (error) throw error;
-      toast.success("Images added");
-      refresh();
+      await saveImages(
+        row,
+        [...row.image_urls, ...(await uploadImages(row.slug, files))],
+        "Photos added",
+      );
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Upload failed");
     }
   };
-  const removeImage = async (row: Row, url: string) => {
-    const { error } = await db
-      .from("products")
-      .update({ image_urls: row.image_urls.filter((u) => u !== url) })
-      .eq("id", row.id);
-    if (error) toast.error(error.message);
-    else refresh();
+  const addLink = async (row: Row) => {
+    try {
+      const links = parseLinks(linkDraft[row.id] ?? "").filter((l) => !row.image_urls.includes(l));
+      if (links.length === 0) return;
+      await saveImages(row, [...row.image_urls, ...links], "Image links added");
+      setLinkDraft((d) => ({ ...d, [row.id]: "" }));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Invalid link");
+    }
   };
+  const removeImage = async (row: Row, url: string) => {
+    await saveImages(
+      row,
+      row.image_urls.filter((u) => u !== url),
+      "Image removed",
+    );
+    // Free the storage space when the photo was an upload (linked images live elsewhere).
+    const path = supabaseStoragePath(url);
+    if (path) await db.storage.from("product-images").remove([path]);
+  };
+  const makeMain = (row: Row, url: string) =>
+    saveImages(row, [url, ...row.image_urls.filter((u) => u !== url)], "Main photo changed");
+
   const create = async (e: FormEvent) => {
     e.preventDefault();
     try {
-      const image_urls = newFiles.length ? await uploadImages(form.slug, newFiles) : [];
+      const linked = parseLinks(newLinks);
+      const uploaded = newFiles.length ? await uploadImages(form.slug, newFiles) : [];
       const { error } = await db.from("products").insert({
         name: form.name,
         slug: form.slug,
         sku: form.sku,
         category_id: form.category_id,
         image_key: form.image_key,
-        image_urls,
+        image_urls: [...linked, ...uploaded],
         price_cents: Math.round(Number(form.price) * 100),
         stock_quantity: Math.floor(Number(form.stock)),
         color_options: [form.color],
@@ -143,6 +188,7 @@ export function ProductsPanel() {
       if (error) throw error;
       toast.success("Product created as draft");
       setNewFiles([]);
+      setNewLinks("");
       refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not create product");
@@ -199,8 +245,8 @@ export function ProductsPanel() {
         <Input
           required
           type="number"
-          step="0.01"
-          min="0.01"
+          step="1"
+          min="1"
           placeholder="Price (Rs)"
           value={form.price}
           onChange={(e) => setForm({ ...form, price: e.target.value })}
@@ -223,7 +269,16 @@ export function ProductsPanel() {
           ))}
         </select>
         <label className="sm:col-span-4">
-          Photos (optional, up to 5 MB each)
+          Image links from Cloudinary or ImageKit (one per line, optional; saves storage)
+          <textarea
+            className="mt-1 min-h-16 w-full border border-input bg-background p-2 text-sm"
+            value={newLinks}
+            onChange={(e) => setNewLinks(e.target.value)}
+            placeholder="https://res.cloudinary.com/..."
+          />
+        </label>
+        <label className="sm:col-span-4">
+          Or upload photos (they are shrunk automatically)
           <Input
             type="file"
             accept="image/*"
@@ -246,11 +301,11 @@ export function ProductsPanel() {
                 </span>
               </span>
               <Input
-                className="h-8 w-24"
+                className="h-8 w-28"
                 type="number"
-                step="0.01"
-                aria-label="Price"
-                defaultValue={(p.price_cents / 100).toFixed(2)}
+                step="1"
+                aria-label="Price (Rs)"
+                defaultValue={Math.round(p.price_cents / 100)}
                 onChange={(e) =>
                   setDraft((d) => ({ ...d, [p.id]: { ...d[p.id], price: e.target.value } }))
                 }
@@ -282,9 +337,19 @@ export function ProductsPanel() {
               </Button>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              {p.image_urls.map((url) => (
+              {p.image_urls.map((url, index) => (
                 <span key={url} className="relative">
-                  <img src={url} alt="" className="size-14 object-cover" />
+                  <img src={optimizeImageUrl(url, 120)} alt="" className="size-14 object-cover" />
+                  {index > 0 && (
+                    <button
+                      aria-label="Make main photo"
+                      title="Make main photo"
+                      onClick={() => void makeMain(p, url)}
+                      className="absolute -left-1 -top-1 rounded-full bg-primary px-1 text-[10px] text-primary-foreground"
+                    >
+                      ★
+                    </button>
+                  )}
                   <button
                     aria-label="Remove image"
                     onClick={() => void removeImage(p, url)}
@@ -295,15 +360,27 @@ export function ProductsPanel() {
                 </span>
               ))}
               <label className="cursor-pointer text-xs underline">
-                Add photos
+                Upload photos
                 <input
                   type="file"
                   accept="image/*"
                   multiple
                   className="sr-only"
-                  onChange={(e) => void addImages(p, e.target.files)}
+                  onChange={(e) => void addUploads(p, e.target.files)}
                 />
               </label>
+            </div>
+            <div className="flex gap-2">
+              <Input
+                className="h-8"
+                aria-label="Paste image link"
+                placeholder="Paste Cloudinary / ImageKit link"
+                value={linkDraft[p.id] ?? ""}
+                onChange={(e) => setLinkDraft((d) => ({ ...d, [p.id]: e.target.value }))}
+              />
+              <Button size="sm" variant="outline" onClick={() => void addLink(p)}>
+                Add link
+              </Button>
             </div>
           </li>
         ))}

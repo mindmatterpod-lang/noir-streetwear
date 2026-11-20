@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/use-cart";
 import { setCartOpen } from "@/hooks/use-cart-drawer";
 import { formatPrice } from "@/lib/format";
+import { optimizeImageUrl } from "@/lib/image-tools";
 import { fetchProducts } from "@/lib/products-api";
 import { getProduct } from "@/lib/store-catalog";
 import { COLOR_NAMES, PRODUCT_SIZES, type ProductColor, type ProductSize } from "@/types/store";
@@ -112,7 +113,7 @@ function ProductDetail() {
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-10 sm:px-6 md:grid-cols-2">
         <div>
           <img
-            src={gallery[active]}
+            src={optimizeImageUrl(gallery[active] ?? product.image, 1100)}
             alt={product.name}
             className="aspect-[4/5] w-full object-cover"
           />
@@ -125,7 +126,7 @@ function ProductDetail() {
                   aria-label={`View image ${i + 1}`}
                   className={`h-24 w-20 overflow-hidden border ${i === active ? "border-foreground" : "border-border"}`}
                 >
-                  <img src={src} alt="" className="size-full object-cover" />
+                  <img src={optimizeImageUrl(src, 200)} alt="" className="size-full object-cover" />
                 </button>
               ))}
             </div>
