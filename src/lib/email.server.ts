@@ -5,7 +5,8 @@ const esc = (value: string) =>
     /[&<>"']/g,
     (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] ?? c,
   );
-const money = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+const money = (paisa: number) =>
+  `Rs ${(paisa / 100).toLocaleString("en-PK", { maximumFractionDigits: 2 })}`;
 
 export interface EmailOrder {
   id: string;

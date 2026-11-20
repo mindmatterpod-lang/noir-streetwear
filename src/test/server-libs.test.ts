@@ -51,12 +51,12 @@ describe("renderOrderEmail", () => {
     payment_method: "cod",
     payment_status: "unpaid",
     tracking_number: "TRK123",
-    subtotal_cents: 11800,
-    discount_cents: 1180,
+    subtotal_cents: 649900,
+    discount_cents: 65000,
     shipping_cents: 0,
     tax_cents: 0,
-    total_cents: 10620,
-    items: [{ name: "Hoodie", size: "M", color: "ink", quantity: 1, unit_price_cents: 11800 }],
+    total_cents: 584900,
+    items: [{ name: "Hoodie", size: "M", color: "ink", quantity: 1, unit_price_cents: 649900 }],
   };
   it("escapes customer-supplied text", () => {
     expect(renderOrderEmail(order, "shipped", "https://x.test").html).not.toContain("<script>");
@@ -65,7 +65,7 @@ describe("renderOrderEmail", () => {
     const { subject, html } = renderOrderEmail(order, "shipped", "https://x.test");
     expect(subject).toContain("#12345678");
     expect(html).toContain("TRK123");
-    expect(html).toContain("$106.20");
+    expect(html).toContain("Rs 5,849");
     expect(html).toContain("https://x.test/order/12345678-aaaa-bbbb-cccc-1234567890ab?token=tok");
   });
 });

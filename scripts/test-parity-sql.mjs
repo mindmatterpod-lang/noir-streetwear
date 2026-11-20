@@ -18,9 +18,11 @@ GRANT USAGE ON SCHEMA public, auth TO anon, authenticated, service_role; GRANT E
 for (const f of fs.readdirSync(R + "supabase/migrations").sort())
   await run(fs.readFileSync(R + "supabase/migrations/" + f, "utf8"));
 await run(fs.readFileSync(R + "docs/shopify-parity.sql", "utf8"));
-// idempotency: second run must not error
+await run(fs.readFileSync(R + "docs/pakistan-pkr.sql", "utf8"));
+// idempotency: running both files again must not error
 await run(fs.readFileSync(R + "docs/shopify-parity.sql", "utf8"));
-console.log("migrations + parity SQL applied (twice)");
+await run(fs.readFileSync(R + "docs/pakistan-pkr.sql", "utf8"));
+console.log("migrations + parity + Pakistan SQL applied (twice)");
 
 let pass = 0,
   fail = 0;
@@ -56,7 +58,7 @@ await run(
 );
 const mk = (items, code = null, method = "cod", user = null) =>
   db.query(
-    "select create_order_from_checkout($1,'Jane Doe','Jane@Example.com','12 Main Street','Faisalabad','38000','Pakistan',$2::jsonb,$3,$4) as r",
+    "select create_order_from_checkout($1,'Jane Doe','Jane@Example.com','0300-1234567','12 Main Street','Faisalabad','Punjab','38000',$2::jsonb,$3,$4) as r",
     [user, JSON.stringify(items), code, method],
   );
 const it = (p, qty = 1, size = "M", color = "ink") => ({
@@ -71,7 +73,7 @@ let r = (await mk([it(hoodie, 1)])).rows[0].r;
 ok("guest order subtotal", r.subtotal_cents === hoodie.price_cents, JSON.stringify(r));
 ok(
   "flat shipping below threshold",
-  r.shipping_cents === 800 && r.total_cents === r.subtotal_cents + 800,
+  r.shipping_cents === 25000 && r.total_cents === r.subtotal_cents + 25000,
 );
 ok(
   "order has guest token + null user",
@@ -81,6 +83,53 @@ ok(
 ok(
   "order_items created",
   (await q("select count(*)::int c from order_items where order_id=$1", [r.id]))[0].c === 1,
+);
+const row0 = (
+  await q(
+    "select currency, shipping_phone, shipping_province, shipping_country from orders where id=$1",
+    [r.id],
+  )
+)[0];
+ok(
+  "order stored in PKR for Pakistan",
+  row0.currency === "PKR" &&
+    row0.shipping_country === "Pakistan" &&
+    row0.shipping_province === "Punjab",
+  JSON.stringify(row0),
+);
+ok("phone normalised to +92", row0.shipping_phone === "+923001234567", row0.shipping_phone);
+ok("hoodie priced in rupees (Rs 6,499)", hoodie.price_cents === 649900, String(hoodie.price_cents));
+const set0 = (await q("select * from store_settings"))[0];
+ok(
+  "Pakistan settings: Rs 250 shipping, free from Rs 7,500, no tax, COD on",
+  set0.shipping_flat_cents === 25000 &&
+    set0.free_shipping_threshold_cents === 750000 &&
+    set0.tax_rate_bps === 0 &&
+    set0.cod_enabled === true,
+  JSON.stringify(set0),
+);
+const call = (phone, prov, postal = "") =>
+  throws(
+    "select create_order_from_checkout(null,'Jane Doe','a@b.co',$1,'12 Main Street','Lahore',$2,$3,$4::jsonb,null,'cod')",
+    [phone, prov, postal, JSON.stringify([it(hoodie)])],
+  );
+for (const good of [
+  "03001234567",
+  "0300 1234567",
+  "+92 300 1234567",
+  "923001234567",
+  "00923001234567",
+  "(0300) 123-4567",
+])
+  ok("accepts phone " + good, (await call(good, "Sindh")) === null);
+for (const bad2 of ["0211234567", "12345", "0400 1234567", "abc", ""])
+  ok("rejects phone '" + bad2 + "'", /Pakistani mobile/.test((await call(bad2, "Sindh")) ?? ""));
+ok("rejects unknown province", /province/.test((await call("03001234567", "Texas")) ?? ""));
+ok(
+  "blank postal stored as N/A",
+  (await call("03001234567", "Sindh", "  ")) === null &&
+    (await q("select shipping_postal_code p from orders order by created_at desc limit 1"))[0].p ===
+      "N/A",
 );
 // 2 free shipping at threshold and tax
 await run("UPDATE store_settings SET tax_rate_bps = 1000, free_shipping_threshold_cents = 20000");
@@ -92,7 +141,7 @@ ok(
     r.total_cents === r.subtotal_cents + r.tax_cents,
   JSON.stringify(r),
 );
-await run("UPDATE store_settings SET tax_rate_bps = 0, free_shipping_threshold_cents = 15000");
+await run("UPDATE store_settings SET tax_rate_bps = 0, free_shipping_threshold_cents = 750000");
 // 3 discounts
 await run(`INSERT INTO discount_codes(code, percent_off, min_subtotal_cents, max_uses) VALUES ('SAVE10', 10, 5000, 2);
  INSERT INTO discount_codes(code, amount_off_cents) VALUES ('FLAT50', 5000);
@@ -115,7 +164,7 @@ ok(
   "expired code rejected",
   /not valid/.test(
     (await throws(
-      "select create_order_from_checkout(null,'Jane Doe','a@b.co','12 Main Street','Fsd','38000','PK',$1::jsonb,'OLD','cod')",
+      "select create_order_from_checkout(null,'Jane Doe','a@b.co','03001234567','12 Main Street','Fsd','Punjab','38000',$1::jsonb,'OLD','cod')",
       [JSON.stringify([it(hoodie)])],
     )) ?? "",
   ),
@@ -124,7 +173,7 @@ ok(
   "inactive code rejected",
   /not valid/.test(
     (await throws(
-      "select create_order_from_checkout(null,'Jane Doe','a@b.co','12 Main Street','Fsd','38000','PK',$1::jsonb,'OFF','cod')",
+      "select create_order_from_checkout(null,'Jane Doe','a@b.co','03001234567','12 Main Street','Fsd','Punjab','38000',$1::jsonb,'OFF','cod')",
       [JSON.stringify([it(hoodie)])],
     )) ?? "",
   ),
@@ -134,7 +183,7 @@ ok(
   "max_uses enforced",
   /not valid/.test(
     (await throws(
-      "select create_order_from_checkout(null,'Jane Doe','a@b.co','12 Main Street','Fsd','38000','PK',$1::jsonb,'SAVE10','cod')",
+      "select create_order_from_checkout(null,'Jane Doe','a@b.co','03001234567','12 Main Street','Fsd','Punjab','38000',$1::jsonb,'SAVE10','cod')",
       [JSON.stringify([it(hoodie)])],
     )) ?? "",
   ),
@@ -147,7 +196,7 @@ ok(
   "unknown code rejected",
   /not valid/.test(
     (await throws(
-      "select create_order_from_checkout(null,'Jane Doe','a@b.co','12 Main Street','Fsd','38000','PK',$1::jsonb,'NOPE','cod')",
+      "select create_order_from_checkout(null,'Jane Doe','a@b.co','03001234567','12 Main Street','Fsd','Punjab','38000',$1::jsonb,'NOPE','cod')",
       [JSON.stringify([it(hoodie)])],
     )) ?? "",
   ),
@@ -155,7 +204,7 @@ ok(
 // 4 validation
 const bad = (items, msg, label) =>
   throws(
-    "select create_order_from_checkout(null,'Jane Doe','a@b.co','12 Main Street','Fsd','38000','PK',$1::jsonb,null,'cod')",
+    "select create_order_from_checkout(null,'Jane Doe','a@b.co','03001234567','12 Main Street','Fsd','Punjab','38000',$1::jsonb,null,'cod')",
     [JSON.stringify(items)],
   ).then((e) => ok(label, new RegExp(msg).test(e ?? "")));
 await bad([it(hoodie, 99)], "color, and quantity", "quantity > 5 rejected");
@@ -172,9 +221,9 @@ await run(`UPDATE products SET stock_quantity = 1 WHERE id='${bomber.id}'`);
 await bad([it(bomber, 2, "M", "ink")], "Insufficient stock", "insufficient stock rejected");
 ok(
   "bad email rejected",
-  /shipping details/.test(
+  /delivery details/.test(
     (await throws(
-      "select create_order_from_checkout(null,'Jane Doe','nope','12 Main Street','Fsd','38000','PK',$1::jsonb,null,'cod')",
+      "select create_order_from_checkout(null,'Jane Doe','nope','03001234567','12 Main Street','Fsd','Punjab','38000',$1::jsonb,null,'cod')",
       [JSON.stringify([it(hoodie)])],
     )) ?? "",
   ),
@@ -195,7 +244,7 @@ ok(
   "anon cannot create orders",
   /permission denied/.test(
     (await throws(
-      "select create_order_from_checkout(null,'Jane Doe','a@b.co','12 Main Street','Fsd','38000','PK','[]'::jsonb,null,'cod')",
+      "select create_order_from_checkout(null,'Jane Doe','a@b.co','03001234567','12 Main Street','Fsd','Punjab','38000','[]'::jsonb,null,'cod')",
     )) ?? "",
   ),
 );

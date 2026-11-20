@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 
 import { CartLines } from "@/components/cart/CartDrawer";
 import { SiteLayout } from "@/components/layout/SiteLayout";
+import { ShippingNote } from "@/components/shop/ShippingNote";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/use-cart";
 import { formatPrice } from "@/lib/format";
@@ -26,7 +27,7 @@ function CartPage() {
               <span>Subtotal</span>
               <span>{formatPrice(subtotalCents)}</span>
             </div>
-            <p className="text-sm text-muted-foreground">Shipping: free</p>
+            <ShippingNote className="text-sm text-muted-foreground" />
             <Button asChild size="lg" className="w-full">
               <Link to="/checkout">Proceed to checkout</Link>
             </Button>

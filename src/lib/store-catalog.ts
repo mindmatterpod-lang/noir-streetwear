@@ -23,7 +23,7 @@ export const PRODUCTS: Product[] = [
     description:
       "A substantial brushed-cotton layer with a relaxed drape and considered everyday weight. Cut for easy layering, with a softly structured hood and a finish that gets better with wear.",
     category: "Hoodies",
-    priceCents: 11800,
+    priceCents: 649900,
     image: hoodie,
     alternateImage: hoodieAlternate,
     colors: ["cherry", "ink", "cloud"],
@@ -38,7 +38,7 @@ export const PRODUCTS: Product[] = [
     description:
       "An everyday essential in brushed fleece. An oversized shape meets deep color and the kind of weight you feel right away.",
     category: "Hoodies",
-    priceCents: 12400,
+    priceCents: 699900,
     image: hoodie,
     colors: ["cherry", "ink"],
     createdAt: "2026-11-12",
@@ -51,7 +51,7 @@ export const PRODUCTS: Product[] = [
     description:
       "A matching technical warm-up set with clean piping, easy movement, and a quietly confident finish.",
     category: "Tracksuits",
-    priceCents: 17600,
+    priceCents: 899900,
     image: tracksuit,
     alternateImage: trackAlternate,
     colors: ["fern", "ink"],
@@ -66,7 +66,7 @@ export const PRODUCTS: Product[] = [
     description:
       "A full two-piece track set cut in a smooth technical knit. A little piping, a lot of versatility.",
     category: "Tracksuits",
-    priceCents: 18400,
+    priceCents: 949900,
     image: navyTracksuit,
     colors: ["navy", "ink"],
     createdAt: "2026-11-08",
@@ -79,7 +79,7 @@ export const PRODUCTS: Product[] = [
     description:
       "A lightweight technical layer with practical storage and a vivid red shell that stands on its own.",
     category: "Jackets",
-    priceCents: 15200,
+    priceCents: 849900,
     image: jacket,
     colors: ["cherry", "ink", "fern"],
     createdAt: "2026-11-13",
@@ -93,7 +93,7 @@ export const PRODUCTS: Product[] = [
     description:
       "The everyday bomber, rethought in a quieter graphite finish with a soft technical hand.",
     category: "Jackets",
-    priceCents: 16400,
+    priceCents: 899900,
     image: bomber,
     colors: ["ink", "navy"],
     createdAt: "2026-11-10",
@@ -106,7 +106,7 @@ export const PRODUCTS: Product[] = [
     description:
       "Easy, considered volume meets hard-wearing everyday utility in a clean dark twill.",
     category: "Trousers",
-    priceCents: 11200,
+    priceCents: 499900,
     image: utilityTrousers,
     colors: ["ink", "navy"],
     createdAt: "2026-11-11",
@@ -119,7 +119,7 @@ export const PRODUCTS: Product[] = [
     description:
       "A wide straight-leg silhouette with crisp front pleats and just enough structure for every day.",
     category: "Trousers",
-    priceCents: 12600,
+    priceCents: 549900,
     image: trousers,
     colors: ["ink", "cloud"],
     createdAt: "2026-11-09",
@@ -133,7 +133,7 @@ export const PRODUCTS: Product[] = [
     description:
       "A precise cotton-poplin shirt with a relaxed silhouette and an easy, open collar.",
     category: "Shirts",
-    priceCents: 9200,
+    priceCents: 399900,
     image: shirt,
     colors: ["cloud", "ink"],
     createdAt: "2026-11-07",
@@ -146,7 +146,7 @@ export const PRODUCTS: Product[] = [
     description:
       "Relaxed poplin, fine blue stripes. An effortless layer from a slow morning to late night.",
     category: "Shirts",
-    priceCents: 9800,
+    priceCents: 429900,
     image: stripedShirt,
     colors: ["cloud", "navy"],
     createdAt: "2026-11-06",

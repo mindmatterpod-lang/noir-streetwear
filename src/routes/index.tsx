@@ -13,7 +13,7 @@ export const Route = createFileRoute("/")({
       { title: "Noir Streetwear — Hoodies, Tracksuits, Jackets, Trousers & Shirts" },
       {
         name: "description",
-        content: "Modern streetwear in five core categories. Free shipping on every order.",
+        content: "Modern streetwear in five core categories. Cash on delivery across Pakistan.",
       },
       { property: "og:title", content: "Noir Streetwear" },
       { property: "og:description", content: "Modern streetwear in five core categories." },

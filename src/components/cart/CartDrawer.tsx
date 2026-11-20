@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Minus, Plus, X } from "lucide-react";
 
+import { ShippingNote } from "@/components/shop/ShippingNote";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useCart } from "@/hooks/use-cart";
@@ -84,7 +85,7 @@ export function CartDrawer() {
               <span>Subtotal</span>
               <span>{formatPrice(subtotalCents)}</span>
             </div>
-            <p className="text-xs text-muted-foreground">Free shipping on every order.</p>
+            <ShippingNote />
             <Button asChild className="w-full" onClick={() => setOpen(false)}>
               <Link to="/checkout">Checkout</Link>
             </Button>

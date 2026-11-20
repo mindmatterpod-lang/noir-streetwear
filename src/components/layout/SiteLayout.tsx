@@ -13,7 +13,7 @@ import { SITE_NAME } from "@/lib/site-config";
 import { CORE_CATEGORIES } from "@/types/store";
 
 const POLICY_LINKS: [string, string][] = [
-  ["shipping-returns", "Shipping & returns"],
+  ["shipping-returns", "Delivery & returns"],
   ["size-guide", "Size guide"],
   ["contact", "Contact & FAQ"],
   ["privacy", "Privacy"],

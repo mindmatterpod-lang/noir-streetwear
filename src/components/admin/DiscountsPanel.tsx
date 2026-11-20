@@ -90,14 +90,14 @@ export function DiscountsPanel() {
           onChange={(e) => setForm({ ...form, kind: e.target.value })}
         >
           <option value="percent">Percent off</option>
-          <option value="amount">Fixed amount off (USD)</option>
+          <option value="amount">Fixed amount off (Rs)</option>
         </select>
         <Input
           required
           type="number"
           min="0.01"
           step="0.01"
-          placeholder={form.kind === "percent" ? "Percent (1–100)" : "Amount (USD)"}
+          placeholder={form.kind === "percent" ? "Percent (1–100)" : "Amount (Rs)"}
           value={form.value}
           onChange={(e) => setForm({ ...form, value: e.target.value })}
         />
@@ -105,7 +105,7 @@ export function DiscountsPanel() {
           type="number"
           min="0"
           step="0.01"
-          placeholder="Minimum order (USD)"
+          placeholder="Minimum order (Rs)"
           value={form.min}
           onChange={(e) => setForm({ ...form, min: e.target.value })}
         />

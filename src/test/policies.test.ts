@@ -23,3 +23,12 @@ describe("policy pages", () => {
     ]);
   });
 });
+
+describe("Pakistan localisation", () => {
+  it("states prices in PKR and mentions cash on delivery, with no dollar wording", () => {
+    const all = JSON.stringify(POLICIES);
+    expect(all).toContain("Pakistani Rupees");
+    expect(all).toContain("Cash on delivery");
+    expect(all).not.toMatch(/USD|\$/);
+  });
+});

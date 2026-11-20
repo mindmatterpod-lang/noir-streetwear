@@ -21,6 +21,8 @@ interface AdminOrder {
   shipping_address: string;
   shipping_city: string;
   shipping_country: string;
+  shipping_phone: string | null;
+  shipping_province: string | null;
   order_items: {
     id: string;
     product_name: string;
@@ -52,7 +54,7 @@ export function OrdersPanel() {
       const { data, error: e } = await db
         .from("orders")
         .select(
-          "id, status, payment_method, payment_status, total_cents, tracking_number, created_at, shipping_name, shipping_email, shipping_address, shipping_city, shipping_country, order_items(id, product_name, size, color, quantity)",
+          "id, status, payment_method, payment_status, total_cents, tracking_number, created_at, shipping_name, shipping_email, shipping_phone, shipping_province, shipping_address, shipping_city, shipping_country, order_items(id, product_name, size, color, quantity)",
         )
         .order("created_at", { ascending: false });
       if (e) throw e;
@@ -104,7 +106,8 @@ export function OrdersPanel() {
             </span>
           </div>
           <p className="text-muted-foreground">
-            {o.shipping_address}, {o.shipping_city}, {o.shipping_country}
+            {o.shipping_address}, {o.shipping_city}, {o.shipping_province ?? ""} · Phone:{" "}
+            {o.shipping_phone ?? "n/a"}
           </p>
           <ul className="my-2">
             {o.order_items.map((i) => (

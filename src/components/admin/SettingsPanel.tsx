@@ -47,7 +47,7 @@ export function SettingsPanel() {
   return (
     <form onSubmit={save} className="max-w-md space-y-4">
       <div>
-        <Label htmlFor="ship">Flat shipping rate (USD)</Label>
+        <Label htmlFor="ship">Delivery charge (Rs)</Label>
         <Input
           id="ship"
           type="number"
@@ -58,7 +58,7 @@ export function SettingsPanel() {
         />
       </div>
       <div>
-        <Label htmlFor="free">Free shipping from (USD, blank = never)</Label>
+        <Label htmlFor="free">Free delivery from (Rs, blank = never)</Label>
         <Input
           id="free"
           type="number"
@@ -69,7 +69,9 @@ export function SettingsPanel() {
         />
       </div>
       <div>
-        <Label htmlFor="tax">Tax rate (%)</Label>
+        <Label htmlFor="tax">
+          Tax rate (% added on top of prices; 0 if prices already include tax)
+        </Label>
         <Input
           id="tax"
           type="number"

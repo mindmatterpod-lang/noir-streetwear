@@ -6,8 +6,8 @@ export interface StoreSettings {
 }
 
 export const DEFAULT_SETTINGS: StoreSettings = {
-  shipping_flat_cents: 800,
-  free_shipping_threshold_cents: 15000,
+  shipping_flat_cents: 25000,
+  free_shipping_threshold_cents: 750000,
   tax_rate_bps: 0,
   cod_enabled: true,
 };

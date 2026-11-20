@@ -201,7 +201,7 @@ export function ProductsPanel() {
           type="number"
           step="0.01"
           min="0.01"
-          placeholder="Price (USD)"
+          placeholder="Price (Rs)"
           value={form.price}
           onChange={(e) => setForm({ ...form, price: e.target.value })}
         />

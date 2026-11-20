@@ -23,13 +23,28 @@ export const Route = createFileRoute("/checkout")({
   component: Checkout,
 });
 
+const PROVINCES = [
+  "Punjab",
+  "Sindh",
+  "Khyber Pakhtunkhwa",
+  "Balochistan",
+  "Islamabad Capital Territory",
+  "Gilgit-Baltistan",
+  "Azad Jammu & Kashmir",
+] as const;
+
 const FIELDS = [
   { key: "name", label: "Full name", autoComplete: "name" },
-  { key: "email", label: "Email", autoComplete: "email", type: "email" },
-  { key: "address", label: "Address", autoComplete: "street-address" },
+  { key: "email", label: "Email (for your order updates)", autoComplete: "email", type: "email" },
+  {
+    key: "phone",
+    label: "Mobile number",
+    autoComplete: "tel",
+    type: "tel",
+    placeholder: "0300 1234567",
+  },
+  { key: "address", label: "Full address (house, street, area)", autoComplete: "street-address" },
   { key: "city", label: "City", autoComplete: "address-level2" },
-  { key: "postal_code", label: "Postal code", autoComplete: "postal-code" },
-  { key: "country", label: "Country", autoComplete: "country-name" },
 ] as const;
 
 function Checkout() {
@@ -54,8 +69,8 @@ function Checkout() {
     subtotalCents,
     applied?.cents ?? 0,
     settings ?? {
-      shipping_flat_cents: 800,
-      free_shipping_threshold_cents: 15000,
+      shipping_flat_cents: 25000,
+      free_shipping_threshold_cents: 750000,
       tax_rate_bps: 0,
       cod_enabled: true,
     },
@@ -96,10 +111,11 @@ function Checkout() {
           customer: {
             name: form["name"] ?? "",
             email: form["email"] ?? "",
+            phone: form["phone"] ?? "",
             address: form["address"] ?? "",
             city: form["city"] ?? "",
+            province: form["province"] ?? "",
             postal_code: form["postal_code"] ?? "",
-            country: form["country"] ?? "",
           },
           code: applied?.code ?? null,
           method: effectiveMethod,
@@ -162,12 +178,37 @@ function Checkout() {
                   id={f.key}
                   required
                   autoComplete={f.autoComplete}
+                  placeholder={"placeholder" in f ? f.placeholder : undefined}
                   type={"type" in f ? f.type : "text"}
                   value={form[f.key] ?? ""}
                   onChange={(e) => setForm((prev) => ({ ...prev, [f.key]: e.target.value }))}
                 />
               </div>
             ))}
+            <div>
+              <Label htmlFor="province">Province</Label>
+              <select
+                id="province"
+                required
+                value={form["province"] ?? ""}
+                onChange={(e) => setForm((prev) => ({ ...prev, province: e.target.value }))}
+                className="h-9 w-full border border-input bg-background px-3 text-sm"
+              >
+                <option value="">Select province</option>
+                {PROVINCES.map((p) => (
+                  <option key={p}>{p}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <Label htmlFor="postal_code">Postal code (optional)</Label>
+              <Input
+                id="postal_code"
+                autoComplete="postal-code"
+                value={form["postal_code"] ?? ""}
+                onChange={(e) => setForm((prev) => ({ ...prev, postal_code: e.target.value }))}
+              />
+            </div>
             <fieldset className="space-y-2 border border-border p-4">
               <legend className="px-1 text-xs uppercase tracking-widest">Payment</legend>
               {codAllowed && (

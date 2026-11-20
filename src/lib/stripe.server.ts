@@ -58,7 +58,7 @@ export async function createCheckoutSession(
     ...(input.taxCents > 0 ? [{ name: "Tax", amount: input.taxCents, quantity: 1 }] : []),
   ];
   lines.forEach((l, n) => {
-    p.set(`line_items[${n}][price_data][currency]`, "usd");
+    p.set(`line_items[${n}][price_data][currency]`, "pkr");
     p.set(`line_items[${n}][price_data][product_data][name]`, l.name);
     p.set(`line_items[${n}][price_data][unit_amount]`, String(l.amount));
     p.set(`line_items[${n}][quantity]`, String(l.quantity));
@@ -68,7 +68,7 @@ export async function createCheckoutSession(
       "/coupons",
       new URLSearchParams({
         amount_off: String(input.discountCents),
-        currency: "usd",
+        currency: "pkr",
         duration: "once",
       }),
     );

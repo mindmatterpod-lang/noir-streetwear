@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { SiteLayout } from "@/components/layout/SiteLayout";
 import { Reviews } from "@/components/shop/Reviews";
+import { ShippingNote } from "@/components/shop/ShippingNote";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/use-cart";
 import { setCartOpen } from "@/hooks/use-cart-drawer";
@@ -50,7 +51,7 @@ export const Route = createFileRoute("/product/$slug")({
                 sku: product.slug,
                 offers: {
                   "@type": "Offer",
-                  priceCurrency: "USD",
+                  priceCurrency: "PKR",
                   price: (product.priceCents / 100).toFixed(2),
                   availability:
                     product.stock > 0
@@ -192,7 +193,7 @@ function ProductDetail() {
               ✓ {product.name} was added to your bag.
             </p>
           )}
-          <p className="mt-4 text-xs text-muted-foreground">Free shipping on every order.</p>
+          <ShippingNote className="mt-4 text-xs text-muted-foreground" />
         </div>
       </div>
       <Reviews productId={product.dbId} productName={product.name} />

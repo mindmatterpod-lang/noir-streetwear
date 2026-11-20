@@ -1,4 +1,10 @@
-import { BUSINESS_ADDRESS, SITE_NAME, SUPPORT_EMAIL, SUPPORT_PHONE } from "@/lib/site-config";
+import {
+  BUSINESS_ADDRESS,
+  SITE_NAME,
+  SUPPORT_EMAIL,
+  SUPPORT_PHONE,
+  WHATSAPP_NUMBER,
+} from "@/lib/site-config";
 
 export interface PolicySection {
   heading: string;
@@ -14,32 +20,34 @@ export interface Policy {
 // Starter text only: have it reviewed against the laws of the countries you sell in before launch.
 export const POLICIES: Record<string, Policy> = {
   "shipping-returns": {
-    title: "Shipping & returns",
-    description: `Shipping times, costs and the ${SITE_NAME} returns policy.`,
+    title: "Delivery & returns",
+    description: `Delivery times, charges and the ${SITE_NAME} returns policy for Pakistan.`,
     sections: [
       {
         heading: "Processing",
         body: [
-          "Orders are processed within 1–2 business days. You will receive an email when your order is confirmed and again when it ships, with a tracking number where available.",
+          "Orders are confirmed and dispatched within 1–2 working days. For cash on delivery we may call or message you on the mobile number you gave to confirm your order, so please keep it reachable.",
         ],
       },
       {
-        heading: "Shipping costs and delivery",
+        heading: "Delivery across Pakistan",
         body: [
-          "Shipping is a flat rate shown at checkout, and orders above the free-shipping threshold ship free. Delivery usually takes 3–7 business days domestically and 7–14 internationally, depending on your location and carrier.",
+          "We deliver to all provinces through trusted couriers. Delivery usually takes 2–4 working days to major cities and 4–7 working days elsewhere. The delivery charge is shown at checkout, and orders above the free-delivery amount ship free.",
+          "We currently deliver within Pakistan only. International delivery is coming soon.",
         ],
       },
       {
-        heading: "Returns",
+        heading: "Payment on delivery",
         body: [
-          "You can return unworn, unwashed items with tags attached within 14 days of delivery for a refund to your original payment method. Items marked final sale cannot be returned.",
-          `To start a return, email ${SUPPORT_EMAIL} with your order number. Return shipping is paid by the customer unless the item arrived damaged or incorrect.`,
+          "Pay the courier in cash when your parcel arrives. Please check the parcel in front of the rider and tell us straight away if something is wrong.",
         ],
       },
       {
-        heading: "Damaged or wrong items",
+        heading: "Exchanges and returns",
         body: [
-          "If something arrives damaged or isn't what you ordered, contact us within 7 days with a photo and we will replace it or refund you.",
+          "You can request an exchange or return within 7 days of delivery for unworn, unwashed items with tags attached. Sale items are exchange-only.",
+          `To start, message us on WhatsApp (${WHATSAPP_NUMBER}) or email ${SUPPORT_EMAIL} with your order number. If the item arrived damaged or wrong, we cover the return courier cost. For size exchanges the customer pays the return courier.`,
+          "Refunds for card payments go back to the original card. Refunds for cash-on-delivery orders are sent by bank transfer, Easypaisa or JazzCash.",
         ],
       },
       {
@@ -79,31 +87,33 @@ export const POLICIES: Record<string, Policy> = {
       {
         heading: "Contact us",
         body: [
+          `WhatsApp / phone: ${SUPPORT_PHONE}`,
           `Email: ${SUPPORT_EMAIL}`,
-          `Phone: ${SUPPORT_PHONE}`,
           `Address: ${BUSINESS_ADDRESS}`,
-          "We reply within one business day.",
+          "We reply within one working day, usually much sooner on WhatsApp.",
         ],
       },
       {
         heading: "How do I track my order?",
         body: [
-          "Sign in and open your account to see live order status and tracking numbers. Guest customers can use the order link from their confirmation email.",
+          "Open the link in your confirmation email, or sign in and open your account. You will see the status and the courier tracking number once it ships.",
         ],
       },
       {
-        heading: "Which payment methods do you accept?",
+        heading: "Do you have cash on delivery?",
         body: [
-          "Cards through our secure payment provider, and cash on delivery where available. We never see or store your card details.",
+          "Yes. Cash on delivery is available across Pakistan. Card payment will be added soon.",
         ],
       },
       {
-        heading: "Can I change my order?",
-        body: ["Yes, while it is Pending or Processing. Email us with your order number."],
+        heading: "Can I change my address or order?",
+        body: [
+          "Yes, while it is Pending or Processing. Message us on WhatsApp with your order number.",
+        ],
       },
       {
-        heading: "Do you ship internationally?",
-        body: ["Yes. Delivery times and costs are shown at checkout."],
+        heading: "Do you deliver outside Pakistan?",
+        body: ["Not yet, but we plan to. Follow us for updates."],
       },
     ],
   },
@@ -114,7 +124,7 @@ export const POLICIES: Record<string, Policy> = {
       {
         heading: "What we collect",
         body: [
-          "Account details (email), order details (name, shipping address, items purchased), and basic site analytics. Card payments are handled by our payment provider; we do not store card numbers.",
+          "Account details (email), order details (name, mobile number, delivery address, items purchased), and basic site analytics. Card payments are handled by our payment provider; we do not store card numbers.",
         ],
       },
       {
@@ -156,7 +166,7 @@ export const POLICIES: Record<string, Policy> = {
       {
         heading: "Pricing and payment",
         body: [
-          "Prices are shown in USD and include no taxes unless stated. Taxes and shipping are shown at checkout before you pay.",
+          "Prices are in Pakistani Rupees (PKR) and include any applicable taxes unless stated. The delivery charge is shown at checkout before you place your order.",
         ],
       },
       {
