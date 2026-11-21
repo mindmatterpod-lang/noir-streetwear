@@ -101,7 +101,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     scripts: [
       {
         children:
-          "try{var t=localStorage.getItem('noir-theme');if(t==='dark'||(!t&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(e){}",
+          "try{var t=localStorage.getItem('noir-theme');if(t==='dark'||(!t&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(e){}try{if(matchMedia('(prefers-reduced-motion: no-preference)').matches){document.documentElement.classList.add('motion-ok');setTimeout(function(){if(!document.documentElement.classList.contains('hydrated'))document.documentElement.classList.add('reveal-all')},4000)}}catch(e){}",
       },
     ],
     links: [
@@ -135,6 +135,9 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   useEffect(() => {
+    // The page started up: the safety net that reveals content when scripts fail is no longer needed.
+    document.documentElement.classList.add("hydrated");
+    document.documentElement.classList.remove("reveal-all");
     inject();
     injectSpeedInsights();
   }, []);

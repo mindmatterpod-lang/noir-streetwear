@@ -100,8 +100,8 @@ function Shop() {
           <p className="py-20 text-center text-muted-foreground">No pieces match your search.</p>
         ) : (
           <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3 lg:grid-cols-4">
-            {results.map((p) => (
-              <ProductCard key={p.slug} product={p} />
+            {results.map((p, i) => (
+              <ProductCard key={p.slug} product={p} index={i} />
             ))}
           </div>
         )}

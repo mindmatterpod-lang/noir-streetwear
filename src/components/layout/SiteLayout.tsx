@@ -1,8 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { Heart, Menu, Search, ShoppingBag, User } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import { CartDrawer } from "@/components/cart/CartDrawer";
+import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/use-auth";
@@ -23,11 +24,11 @@ const POLICY_LINKS: [string, string][] = [
 function NavLinks({ className }: { className?: string }) {
   return (
     <nav className={className} aria-label="Shop categories">
-      <Link to="/shop" search={{ category: "All pieces" }} className="hover:opacity-60">
+      <Link to="/shop" search={{ category: "All pieces" }} className="link-underline">
         All pieces
       </Link>
       {CORE_CATEGORIES.map((category) => (
-        <Link key={category} to="/shop" search={{ category }} className="hover:opacity-60">
+        <Link key={category} to="/shop" search={{ category }} className="link-underline">
           {category}
         </Link>
       ))}
@@ -39,10 +40,22 @@ export function SiteLayout({ children }: { children: ReactNode }) {
   const { count } = useCart();
   const { user } = useAuth();
   useProducts();
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
-      <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
+      <AnnouncementBar />
+      <header
+        className={`sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur transition-shadow duration-300 ${scrolled ? "shadow-md" : ""}`}
+      >
+        <div
+          className={`mx-auto flex max-w-7xl items-center justify-between px-4 transition-[height] duration-300 sm:px-6 ${scrolled ? "h-14" : "h-16"}`}
+        >
           <div className="flex items-center gap-3">
             <Sheet>
               <SheetTrigger asChild>
@@ -77,7 +90,10 @@ export function SiteLayout({ children }: { children: ReactNode }) {
             >
               <ShoppingBag className="size-5" />
               {count > 0 && (
-                <span className="absolute -right-2 -top-2 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
+                <span
+                  key={count}
+                  className="animate-bump absolute -right-2 -top-2 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground"
+                >
                   {count}
                 </span>
               )}
@@ -85,7 +101,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
       </header>
-      <main className="flex-1">{children}</main>
+      <main className="animate-page-in flex-1">{children}</main>
       <footer className="border-t border-border py-10 text-center text-xs uppercase tracking-widest text-muted-foreground">
         <p className="font-black tracking-[0.3em] text-foreground">Noir</p>
         <p className="mt-2">Hoodies · Tracksuits · Jackets · Trousers · Shirts</p>

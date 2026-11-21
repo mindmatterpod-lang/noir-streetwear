@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { SiteLayout } from "@/components/layout/SiteLayout";
+import { FadeImage } from "@/components/shop/FadeImage";
 import { Reviews } from "@/components/shop/Reviews";
 import { ShippingNote } from "@/components/shop/ShippingNote";
 import { Button } from "@/components/ui/button";
@@ -112,7 +113,8 @@ function ProductDetail() {
     <SiteLayout>
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-10 sm:px-6 md:grid-cols-2">
         <div>
-          <img
+          <FadeImage
+            key={gallery[active]}
             src={optimizeImageUrl(gallery[active] ?? product.image, 1100)}
             alt={product.name}
             className="aspect-[4/5] w-full object-cover"
@@ -182,7 +184,7 @@ function ProductDetail() {
           <Button size="lg" className="mt-4 w-full" disabled={soldOut} onClick={handleAdd}>
             {added ? (
               <>
-                <Check className="mr-2 size-4" />
+                <Check className="animate-pop mr-2 size-4" />
                 Added to bag
               </>
             ) : (
