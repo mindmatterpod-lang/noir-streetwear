@@ -1,4 +1,4 @@
--- Pakistan localisation for Noir Streetwear: prices in Pakistani Rupees (PKR), Pakistani delivery details.
+-- Pakistan localisation for Nowhere: prices in Pakistani Rupees (PKR), Pakistani delivery details.
 -- Run AFTER docs/shopify-parity.sql. Safe to run twice. Money columns keep their names (*_cents) but now
 -- hold PAISA (1 rupee = 100 paisa), so Rs 6,499 is stored as 649900.
 

@@ -35,7 +35,7 @@ export const Route = createFileRoute("/product/$slug")({
     const product = loaderData?.product;
     return {
       meta: [
-        { title: `${product?.name ?? "Product"} — Noir Streetwear` },
+        { title: `${product?.name ?? "Product"} — Nowhere` },
         { name: "description", content: product?.description.slice(0, 155) ?? "" },
         { property: "og:title", content: product?.name ?? "Product" },
         { property: "og:type", content: "product" },

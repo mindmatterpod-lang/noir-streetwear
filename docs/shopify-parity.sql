@@ -1,4 +1,4 @@
--- Shopify-parity migration for Noir Streetwear.
+-- Shopify-parity migration for Nowhere.
 -- Apply AFTER the existing migrations, via Lovable ("apply this SQL") or the Supabase SQL editor,
 -- BEFORE deploying the `shopify-parity` branch. It is written to be re-runnable where practical.
 

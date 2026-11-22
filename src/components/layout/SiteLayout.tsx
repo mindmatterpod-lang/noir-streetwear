@@ -3,6 +3,7 @@ import { Heart, Menu, Search, ShoppingBag, User } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 
 import { CartDrawer } from "@/components/cart/CartDrawer";
+import { Logo } from "@/components/brand/Logo";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -67,8 +68,8 @@ export function SiteLayout({ children }: { children: ReactNode }) {
                 <NavLinks className="mt-10 flex flex-col gap-5 px-6 text-lg uppercase tracking-widest" />
               </SheetContent>
             </Sheet>
-            <Link to="/" className="text-xl font-black uppercase tracking-[0.3em]">
-              Noir
+            <Link to="/" aria-label="Nowhere home" className="flex items-center">
+              <Logo className="h-[17px]" />
             </Link>
           </div>
           <NavLinks className="hidden gap-8 text-xs uppercase tracking-widest md:flex" />
@@ -103,7 +104,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
       </header>
       <main className="animate-page-in flex-1">{children}</main>
       <footer className="border-t border-border py-10 text-center text-xs uppercase tracking-widest text-muted-foreground">
-        <p className="font-black tracking-[0.3em] text-foreground">Noir</p>
+        <Logo className="mx-auto h-3.5 text-foreground" />
         <p className="mt-2">Hoodies · Tracksuits · Jackets · Trousers · Shirts</p>
         <nav aria-label="Policies" className="mt-4 flex flex-wrap justify-center gap-x-6 gap-y-2">
           {POLICY_LINKS.map(([slug, label]) => (

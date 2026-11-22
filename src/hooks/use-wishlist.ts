@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 
-const KEY = "noir-wishlist-v1";
+const KEY = "nowhere-wishlist-v1";
 const EMPTY: string[] = [];
 let snapshot: string[] = EMPTY;
 let loaded = false;

@@ -13,6 +13,7 @@ import { injectSpeedInsights } from "@vercel/speed-insights";
 import { useEffect, type ReactNode } from "react";
 
 import { Toaster } from "@/components/ui/sonner";
+import { SITE_URL } from "@/lib/site-config";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
@@ -84,13 +85,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Noir Streetwear" },
+      { title: "Nowhere" },
       {
         name: "description",
-        content: "Noir — modern streetwear: hoodies, tracksuits, jackets, trousers and shirts.",
+        content: "Nowhere — modern streetwear: hoodies, tracksuits, jackets, trousers and shirts.",
       },
-      { name: "author", content: "Noir Streetwear" },
-      { property: "og:title", content: "Noir Streetwear" },
+      { name: "author", content: "Nowhere" },
+      { name: "theme-color", content: "#0a0a0a" },
+      ...(SITE_URL
+        ? [
+            { property: "og:image", content: `${SITE_URL}/og-image.png` },
+            { name: "twitter:card", content: "summary_large_image" },
+            { name: "twitter:image", content: `${SITE_URL}/og-image.png` },
+          ]
+        : []),
+      { property: "og:title", content: "Nowhere" },
       {
         property: "og:description",
         content: "Modern streetwear: hoodies, tracksuits, jackets, trousers and shirts.",
@@ -101,7 +110,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     scripts: [
       {
         children:
-          "try{var t=localStorage.getItem('noir-theme');if(t==='dark'||(!t&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(e){}try{if(matchMedia('(prefers-reduced-motion: no-preference)').matches){document.documentElement.classList.add('motion-ok');setTimeout(function(){if(!document.documentElement.classList.contains('hydrated'))document.documentElement.classList.add('reveal-all')},4000)}}catch(e){}",
+          "try{var t=localStorage.getItem('nowhere-theme');if(t==='dark'||(!t&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(e){}try{if(matchMedia('(prefers-reduced-motion: no-preference)').matches){document.documentElement.classList.add('motion-ok');setTimeout(function(){if(!document.documentElement.classList.contains('hydrated'))document.documentElement.classList.add('reveal-all')},4000)}}catch(e){}",
       },
     ],
     links: [
@@ -109,7 +118,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
+      { rel: "icon", href: "/favicon.ico", sizes: "48x48" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+      { rel: "manifest", href: "/site.webmanifest" },
     ],
   }),
   shellComponent: RootShell,

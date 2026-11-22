@@ -7,7 +7,7 @@ import { useProducts } from "@/lib/products-api";
 
 export const Route = createFileRoute("/wishlist")({
   head: () => ({
-    meta: [{ title: "Wishlist — Noir Streetwear" }, { name: "robots", content: "noindex" }],
+    meta: [{ title: "Wishlist — Nowhere" }, { name: "robots", content: "noindex" }],
   }),
   component: Wishlist,
 });

@@ -154,7 +154,7 @@
   }
 }
 
-/* Noir palette: monochrome light and dark themes (overrides the defaults above). */
+/* Nowhere palette: monochrome light and dark themes (overrides the defaults above). */
 :root {
   --background: oklch(0.99 0 0);
   --foreground: oklch(0.14 0 0);

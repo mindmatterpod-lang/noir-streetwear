@@ -35,7 +35,7 @@ export const Route = createFileRoute("/order/$id")({
     ...(s["paid"] === "1" || s["paid"] === 1 ? { paid: "1" } : {}),
   }),
   head: () => ({
-    meta: [{ title: "Your order — Noir Streetwear" }, { name: "robots", content: "noindex" }],
+    meta: [{ title: "Your order — Nowhere" }, { name: "robots", content: "noindex" }],
   }),
   component: OrderPage,
 });

@@ -67,7 +67,7 @@ export function renderOrderEmail(order: EmailOrder, kind: OrderEmailKind, origin
         ? "Paid by card"
         : "Card payment pending";
   const html = `<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#111">
-<h1 style="letter-spacing:4px">NOIR</h1><h2>${esc(SUBJECTS[kind])}</h2><p>Hi ${esc(order.shipping_name)},</p><p>${esc(INTRO[kind])}</p>${tracking}
+<h1 style="letter-spacing:6px;font-weight:900">NOWHERE</h1><h2>${esc(SUBJECTS[kind])}</h2><p>Hi ${esc(order.shipping_name)},</p><p>${esc(INTRO[kind])}</p>${tracking}
 <table width="100%" style="border-collapse:collapse;font-size:14px">${rows}
 <tr><td style="padding-top:8px;border-top:1px solid #ddd">Subtotal</td><td align="right" style="border-top:1px solid #ddd">${money(order.subtotal_cents)}</td></tr>
 ${order.discount_cents ? `<tr><td>Discount</td><td align="right">−${money(order.discount_cents)}</td></tr>` : ""}

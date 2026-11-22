@@ -32,7 +32,7 @@ export const Route = createFileRoute("/shop")({
   },
   head: () => ({
     meta: [
-      { title: "Shop — Noir Streetwear" },
+      { title: "Shop — Nowhere" },
       { name: "description", content: "Browse hoodies, tracksuits, jackets, trousers and shirts." },
     ],
   }),

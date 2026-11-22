@@ -11,12 +11,12 @@ import { CORE_CATEGORIES } from "@/types/store";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Noir Streetwear — Hoodies, Tracksuits, Jackets, Trousers & Shirts" },
+      { title: "Nowhere — Hoodies, Tracksuits, Jackets, Trousers & Shirts" },
       {
         name: "description",
         content: "Modern streetwear in five core categories. Cash on delivery across Pakistan.",
       },
-      { property: "og:title", content: "Noir Streetwear" },
+      { property: "og:title", content: "Nowhere" },
       { property: "og:description", content: "Modern streetwear in five core categories." },
     ],
   }),
@@ -31,7 +31,7 @@ function Index() {
       <section className="relative overflow-hidden">
         <img
           src={heroImage}
-          alt="Noir collection campaign"
+          alt="Nowhere collection campaign"
           className="animate-settle h-[70vh] w-full object-cover"
         />
         <div className="absolute inset-0 flex flex-col items-start justify-end bg-gradient-to-t from-black/70 to-transparent p-6 text-white sm:p-12">

@@ -18,7 +18,7 @@ export const Route = createFileRoute("/login")({
         : "/account",
   }),
   head: () => ({
-    meta: [{ title: "Sign in — Noir Streetwear" }, { name: "robots", content: "noindex" }],
+    meta: [{ title: "Sign in — Nowhere" }, { name: "robots", content: "noindex" }],
   }),
   component: LoginPage,
 });

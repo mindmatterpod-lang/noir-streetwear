@@ -3,7 +3,7 @@ import { useSyncExternalStore } from "react";
 import { getProduct } from "@/lib/store-catalog";
 import type { CartItem, Product, ProductColor, ProductSize } from "@/types/store";
 
-const STORAGE_KEY = "afterform-cart-v1";
+const STORAGE_KEY = "nowhere-cart-v1";
 const EMPTY_CART: CartItem[] = [];
 let cartSnapshot: CartItem[] = EMPTY_CART;
 let initialized = false;

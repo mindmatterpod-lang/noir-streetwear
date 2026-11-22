@@ -1,6 +1,6 @@
-# Noir Streetwear
+# Nowhere
 
-Create a professional, international-grade, modern e-commerce web application with a sleek dark-and-light minimalist aesthetic suitable for high-end streetwear and apparel. 
+Create a professional, international-grade, modern e-commerce web application with a sleek dark-and-light minimalist aesthetic suitable for high-end streetwear and apparel.
 
 ### 1. Core Architecture & Folder Structure
 
@@ -32,9 +32,9 @@ The store focuses exclusively on 5 core apparel categories: **Hoodies, Tracksuit
 
 ### 3. Database Security & Absolute Ownership Rules (Supabase)
 
-- **Data Privacy & Ownership:** Configure all data storage strictly inside the user's connected Supabase project. The AI builder platform (Lovable) and external tools must have zero access to production data schemas outside the user's direct project control.
+- **Data Privacy & Ownership:** Configure all data storage strictly inside the user's connected Supabase project. The AI builder platform and external tools must have zero access to production data schemas outside the user's direct project control.
 
-- **Strict Row Level Security (RLS):** 
+- **Strict Row Level Security (RLS):**
 
   - Enable RLS on **every** Supabase table (`products`, `categories`, `orders`, `order_items`, `profiles`).
 
@@ -50,7 +50,7 @@ The store focuses exclusively on 5 core apparel categories: **Hoodies, Tracksuit
 
 - **Admin Features:**
 
-  - Real-time tracker for all incoming customer orders and their live progression states (e.g., *Pending -> Processing -> Shipped -> Delivered -> Cancelled*).
+  - Real-time tracker for all incoming customer orders and their live progression states (e.g., _Pending -> Processing -> Shipped -> Delivered -> Cancelled_).
 
   - Ability to update order statuses and tracking numbers.
 
@@ -59,16 +59,6 @@ The store focuses exclusively on 5 core apparel categories: **Hoodies, Tracksuit
 ### 5. Deployment Readiness (Vercel)
 
 - Structure environment variable handling properly (`VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`) so the project can be exported to GitHub and deployed seamlessly onto **Vercel** with zero build errors.
-
-This project was built with [Lovable](https://lovable.dev).
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/5b6b6d0d-52d2-4bf0-855b-bdfd8e37ebd9).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
 
 ## Development
 

@@ -9,7 +9,7 @@ import { formatPrice } from "@/lib/format";
 
 export const Route = createFileRoute("/cart")({
   head: () => ({
-    meta: [{ title: "Your bag — Noir Streetwear" }, { name: "robots", content: "noindex" }],
+    meta: [{ title: "Your bag — Nowhere" }, { name: "robots", content: "noindex" }],
   }),
   component: CartPage,
 });

@@ -8,7 +8,7 @@ export function ThemeToggle() {
     const next = !dark;
     document.documentElement.classList.toggle("dark", next);
     try {
-      window.localStorage.setItem("noir-theme", next ? "dark" : "light");
+      window.localStorage.setItem("nowhere-theme", next ? "dark" : "light");
     } catch {
       // Theme still switches for this visit when storage is blocked.
     }

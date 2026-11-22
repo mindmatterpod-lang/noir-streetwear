@@ -11,7 +11,7 @@ export const Route = createFileRoute("/policies/$slug")({
   },
   head: ({ loaderData }) => ({
     meta: [
-      { title: `${loaderData?.policy.title ?? "Policy"} — Noir Streetwear` },
+      { title: `${loaderData?.policy.title ?? "Policy"} — Nowhere` },
       { name: "description", content: loaderData?.policy.description ?? "" },
     ],
   }),

@@ -18,7 +18,7 @@ import { COLOR_NAMES } from "@/types/store";
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({
-    meta: [{ title: "Checkout — Noir Streetwear" }, { name: "robots", content: "noindex" }],
+    meta: [{ title: "Checkout — Nowhere" }, { name: "robots", content: "noindex" }],
   }),
   component: Checkout,
 });
