@@ -10,4 +10,4 @@ export const EXTRA_IMAGE_HOSTS: string[] = [];
 
 // Your live web address, with no trailing slash (e.g. "https://nowhere.pk"). Needed for the social-share image
 // shown when the site is shared on WhatsApp, Facebook, etc. Leave empty until you have your domain.
-export const SITE_URL = "";
+export const SITE_URL = "https://nowhere-pk.vercel.app";
