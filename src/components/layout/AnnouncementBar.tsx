@@ -1,34 +1,22 @@
 import { formatPrice } from "@/lib/format";
 import { useStoreSettings } from "@/lib/store-settings";
 
-/** Slow scrolling strip above the header; pauses on hover and stays still for reduced-motion visitors. */
+/** Thin, centred strip above the header. The free-shipping amount always comes from the store settings. */
 export function AnnouncementBar() {
   const { data } = useStoreSettings();
   const free = data?.free_shipping_threshold_cents;
-  const messages = [
-    ...(data?.cod_enabled === false ? [] : ["Cash on delivery across Pakistan"]),
-    ...(free ? [`Free delivery over ${formatPrice(free)}`] : []),
-    "7-day exchange",
-    "New drops every week",
-  ];
+  const message = free
+    ? `Free shipping on orders above ${formatPrice(free)}`
+    : data?.cod_enabled === false
+      ? "Delivery across Pakistan"
+      : "Cash on delivery across Pakistan";
   return (
     <div
-      className="marquee overflow-hidden bg-primary py-2 text-[11px] uppercase tracking-[0.25em] text-primary-foreground"
+      className="bg-[var(--nw-paper)] px-4 py-2 text-center text-[10px] font-medium uppercase tracking-[0.28em] text-[var(--nw-ink)] sm:text-[11px]"
       role="region"
-      aria-label="Store announcements"
+      aria-label="Store announcement"
     >
-      <div className="flex w-max animate-marquee whitespace-nowrap">
-        {[0, 1].map((copy) => (
-          <div key={copy} aria-hidden={copy === 1} className="flex shrink-0 items-center">
-            {messages.map((message) => (
-              <span key={message} className="flex items-center">
-                <span className="px-6">{message}</span>
-                <span aria-hidden="true">✦</span>
-              </span>
-            ))}
-          </div>
-        ))}
-      </div>
+      {message}
     </div>
   );
 }

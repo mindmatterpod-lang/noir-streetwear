@@ -14,15 +14,15 @@ import { formatPrice } from "@/lib/format";
 import { optimizeImageUrl } from "@/lib/image-tools";
 import { fetchProducts } from "@/lib/products-api";
 import { getProduct } from "@/lib/store-catalog";
-import { COLOR_NAMES, PRODUCT_SIZES, type ProductColor, type ProductSize } from "@/types/store";
+import {
+  COLOR_NAMES,
+  COLOR_SWATCH,
+  PRODUCT_SIZES,
+  type ProductColor,
+  type ProductSize,
+} from "@/types/store";
 
-const SWATCH: Record<ProductColor, string> = {
-  ink: "#16181d",
-  cherry: "#9b1b30",
-  fern: "#3f5b45",
-  cloud: "#e9e7e2",
-  navy: "#1b2a4a",
-};
+const SWATCH = COLOR_SWATCH;
 
 export const Route = createFileRoute("/product/$slug")({
   loader: async ({ params }) => {

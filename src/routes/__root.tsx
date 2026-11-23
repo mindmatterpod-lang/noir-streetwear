@@ -109,10 +109,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     scripts: [
       {
         children:
-          "try{var t=localStorage.getItem('nowhere-theme');if(t==='dark'||(!t&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(e){}try{if(matchMedia('(prefers-reduced-motion: no-preference)').matches){document.documentElement.classList.add('motion-ok');setTimeout(function(){if(!document.documentElement.classList.contains('hydrated'))document.documentElement.classList.add('reveal-all')},4000)}}catch(e){}",
+          "try{var t=localStorage.getItem('nowhere-theme');if(t!=='light')document.documentElement.classList.add('dark')}catch(e){}try{if(matchMedia('(prefers-reduced-motion: no-preference)').matches){document.documentElement.classList.add('motion-ok');setTimeout(function(){if(!document.documentElement.classList.contains('hydrated'))document.documentElement.classList.add('reveal-all')},4000)}}catch(e){}",
       },
     ],
     links: [
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap",
+      },
       {
         rel: "stylesheet",
         href: appCss,

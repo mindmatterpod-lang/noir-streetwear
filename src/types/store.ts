@@ -41,3 +41,12 @@ export const COLOR_NAMES: Record<ProductColor, string> = {
   cloud: "Cloud",
   navy: "Midnight",
 };
+
+/** Swatch colours shown on product cards and the product page. */
+export const COLOR_SWATCH: Record<ProductColor, string> = {
+  ink: "#16181d",
+  cherry: "#9b1b30",
+  fern: "#3f5b45",
+  cloud: "#e9e7e2",
+  navy: "#1b2a4a",
+};
