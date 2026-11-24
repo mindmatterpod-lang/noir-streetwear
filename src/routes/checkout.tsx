@@ -1,9 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { toast } from "sonner";
 
+import { EmptyBag } from "@/components/cart/EmptyBag";
 import { SiteLayout } from "@/components/layout/SiteLayout";
+import { ShippingNote } from "@/components/shop/ShippingNote";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { db } from "@/lib/db";
 import { formatPrice } from "@/lib/format";
 import { computeTotals } from "@/lib/pricing";
+import { optimizeImageUrl } from "@/lib/image-tools";
 import { useStoreSettings } from "@/lib/store-settings";
 import { getProduct } from "@/lib/store-catalog";
 import { COLOR_NAMES } from "@/types/store";
@@ -33,19 +36,76 @@ const PROVINCES = [
   "Azad Jammu & Kashmir",
 ] as const;
 
-const FIELDS = [
-  { key: "name", label: "Full name", autoComplete: "name" },
-  { key: "email", label: "Email (for your order updates)", autoComplete: "email", type: "email" },
-  {
-    key: "phone",
-    label: "Mobile number",
-    autoComplete: "tel",
-    type: "tel",
-    placeholder: "0300 1234567",
-  },
-  { key: "address", label: "Full address (house, street, area)", autoComplete: "street-address" },
-  { key: "city", label: "City", autoComplete: "address-level2" },
-] as const;
+const DRAFT_KEY = "nowhere-checkout-v1";
+
+type Form = Record<string, string>;
+
+/** Friendly client-side checks. The server validates everything again and is the authority. */
+function validate(form: Form): Form {
+  const e: Form = {};
+  const v = (k: string) => (form[k] ?? "").trim();
+  if (v("name").length < 2) e["name"] = "Enter your full name.";
+  const digits = v("phone").replace(/\D/g, "");
+  if (digits.length < 10 || digits.length > 13)
+    e["phone"] = "Enter a valid mobile number, e.g. 0300 1234567.";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v("email"))) e["email"] = "Enter a valid email address.";
+  if (v("address").length < 5) e["address"] = "Enter your house, street and area.";
+  if (v("city").length < 2) e["city"] = "Enter your city.";
+  if (!(PROVINCES as readonly string[]).includes(v("province")))
+    e["province"] = "Select your province.";
+  return e;
+}
+
+function Section({ n, title, children }: { n: number; title: string; children: ReactNode }) {
+  return (
+    <section aria-labelledby={`step-${n}`} className="border-t border-border pt-8">
+      <h2 id={`step-${n}`} className="flex items-baseline gap-3">
+        <span className="text-xs tabular-nums text-muted-foreground">0{n}</span>
+        <span className="display-heading text-3xl">{title}</span>
+      </h2>
+      <div className="mt-6 space-y-5">{children}</div>
+    </section>
+  );
+}
+
+function Field({
+  id,
+  label,
+  error,
+  hint,
+  children,
+}: {
+  id: string;
+  label: string;
+  error?: string | undefined;
+  hint?: string;
+  children: (props: Record<string, string | boolean | undefined>) => ReactNode;
+}) {
+  const describedBy = error ? `${id}-error` : hint ? `${id}-hint` : undefined;
+  return (
+    <div>
+      <Label htmlFor={id} className="text-xs uppercase tracking-[0.14em]">
+        {label}
+      </Label>
+      <div className="mt-2">
+        {children({
+          id,
+          "aria-invalid": error ? true : undefined,
+          "aria-describedby": describedBy,
+        })}
+      </div>
+      {error ? (
+        <p id={`${id}-error`} role="alert" className="mt-1.5 text-sm text-destructive">
+          {error}
+        </p>
+      ) : hint ? (
+        <p id={`${id}-hint`} className="mt-1.5 text-xs text-muted-foreground">
+          {hint}
+        </p>
+      ) : null}
+    </div>
+  );
+}
 
 function Checkout() {
   const { items, subtotalCents, clearCart } = useCart();
@@ -57,10 +117,34 @@ function Checkout() {
     queryFn: async () => (await fetch("/api/config")).json() as Promise<{ card: boolean }>,
   });
   const [busy, setBusy] = useState(false);
-  const [form, setForm] = useState<Record<string, string>>({});
+  const submitting = useRef(false);
+  const [form, setForm] = useState<Form>({});
+  const [errors, setErrors] = useState<Form>({});
   const [method, setMethod] = useState<"cod" | "card">("cod");
   const [codeInput, setCodeInput] = useState("");
   const [applied, setApplied] = useState<{ code: string; cents: number } | null>(null);
+
+  // Keep what the customer typed if they leave and come back (this tab only; cleared after the order).
+  useEffect(() => {
+    try {
+      const saved: unknown = JSON.parse(window.sessionStorage.getItem(DRAFT_KEY) ?? "null");
+      if (saved && typeof saved === "object") setForm(saved as Form);
+    } catch {
+      // No saved draft.
+    }
+  }, []);
+  const setField = (key: string, value: string) => {
+    setForm((prev) => {
+      const next = { ...prev, [key]: value };
+      try {
+        window.sessionStorage.setItem(DRAFT_KEY, JSON.stringify(next));
+      } catch {
+        // Draft saving is optional.
+      }
+      return next;
+    });
+    if (errors[key]) setErrors((prev) => ({ ...prev, [key]: "" }));
+  };
 
   const codAllowed = settings?.cod_enabled ?? true;
   const cardAllowed = config?.card ?? false;
@@ -92,6 +176,15 @@ function Checkout() {
 
   const placeOrder = async (e: FormEvent) => {
     e.preventDefault();
+    if (submitting.current) return;
+    const found = validate(form);
+    setErrors(found);
+    const firstBad = Object.keys(found)[0];
+    if (firstBad) {
+      document.getElementById(firstBad)?.focus();
+      return;
+    }
+    submitting.current = true;
     setBusy(true);
     try {
       const { data: session } = await supabase.auth.getSession();
@@ -128,6 +221,11 @@ function Checkout() {
         token?: string;
       };
       if (!response.ok) throw new Error(result.error ?? "Could not place your order");
+      try {
+        window.sessionStorage.removeItem(DRAFT_KEY);
+      } catch {
+        // Nothing to clear.
+      }
       if (result.url) {
         window.location.href = result.url;
         return;
@@ -140,7 +238,7 @@ function Checkout() {
       });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not place your order");
-    } finally {
+      submitting.current = false;
       setBusy(false);
     }
   };
@@ -148,89 +246,179 @@ function Checkout() {
   if (items.length === 0) {
     return (
       <SiteLayout>
-        <div className="py-24 text-center">
-          <p>Your bag is empty.</p>
-          <Link to="/shop" search={{}} className="mt-4 inline-block underline">
-            Continue shopping
-          </Link>
+        <div className="page-container">
+          <EmptyBag />
         </div>
       </SiteLayout>
     );
   }
 
+  const input = "h-12";
+  const errorCount = Object.values(errors).filter(Boolean).length;
+
   return (
     <SiteLayout>
-      <div className="mx-auto grid max-w-5xl gap-10 px-4 py-10 sm:px-6 md:grid-cols-2">
-        <div>
-          <h1 className="text-3xl font-black uppercase tracking-widest">Checkout</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            No account needed.{" "}
-            <Link to="/login" search={{ redirect: "/checkout" }} className="underline">
-              Sign in
-            </Link>{" "}
-            to save your order history.
-          </p>
-          <form onSubmit={placeOrder} className="mt-8 space-y-4">
-            {FIELDS.map((f) => (
-              <div key={f.key}>
-                <Label htmlFor={f.key}>{f.label}</Label>
+      <form
+        onSubmit={placeOrder}
+        noValidate
+        className="page-container grid max-w-6xl gap-12 py-10 md:py-14 lg:grid-cols-[1fr_420px]"
+      >
+        <div className="min-w-0 space-y-10">
+          <header>
+            <h1 className="display-heading text-[clamp(2.75rem,10vw,5.5rem)]">Checkout</h1>
+            <p className="mt-3 text-sm text-muted-foreground">
+              No account needed.{" "}
+              <Link to="/login" search={{ redirect: "/checkout" }} className="underline">
+                Sign in
+              </Link>{" "}
+              to save your order history.
+            </p>
+          </header>
+          {errorCount > 0 && (
+            <p role="alert" className="border border-destructive p-3 text-sm text-destructive">
+              Please fix {errorCount} {errorCount === 1 ? "field" : "fields"} below.
+            </p>
+          )}
+
+          <Section n={1} title="Customer details">
+            <Field id="name" label="Full name" error={errors["name"]}>
+              {(p) => (
                 <Input
-                  id={f.key}
-                  required
-                  autoComplete={f.autoComplete}
-                  placeholder={"placeholder" in f ? f.placeholder : undefined}
-                  type={"type" in f ? f.type : "text"}
-                  value={form[f.key] ?? ""}
-                  onChange={(e) => setForm((prev) => ({ ...prev, [f.key]: e.target.value }))}
+                  {...p}
+                  className={input}
+                  autoComplete="name"
+                  value={form["name"] ?? ""}
+                  onChange={(e) => setField("name", e.target.value)}
                 />
-              </div>
-            ))}
-            <div>
-              <Label htmlFor="province">Province</Label>
-              <select
-                id="province"
-                required
-                value={form["province"] ?? ""}
-                onChange={(e) => setForm((prev) => ({ ...prev, province: e.target.value }))}
-                className="h-9 w-full border border-input bg-background px-3 text-sm"
-              >
-                <option value="">Select province</option>
-                {PROVINCES.map((p) => (
-                  <option key={p}>{p}</option>
-                ))}
-              </select>
+              )}
+            </Field>
+            <Field
+              id="phone"
+              label="Mobile number"
+              error={errors["phone"]}
+              hint="The courier may call this number to confirm delivery."
+            >
+              {(p) => (
+                <Input
+                  {...p}
+                  className={input}
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  placeholder="0300 1234567"
+                  value={form["phone"] ?? ""}
+                  onChange={(e) => setField("phone", e.target.value)}
+                />
+              )}
+            </Field>
+            <Field id="email" label="Email (for your order updates)" error={errors["email"]}>
+              {(p) => (
+                <Input
+                  {...p}
+                  className={input}
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  value={form["email"] ?? ""}
+                  onChange={(e) => setField("email", e.target.value)}
+                />
+              )}
+            </Field>
+          </Section>
+
+          <Section n={2} title="Delivery address">
+            <Field id="address" label="Address (house, street, area)" error={errors["address"]}>
+              {(p) => (
+                <Input
+                  {...p}
+                  className={input}
+                  autoComplete="street-address"
+                  value={form["address"] ?? ""}
+                  onChange={(e) => setField("address", e.target.value)}
+                />
+              )}
+            </Field>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Field id="city" label="City" error={errors["city"]}>
+                {(p) => (
+                  <Input
+                    {...p}
+                    className={input}
+                    autoComplete="address-level2"
+                    value={form["city"] ?? ""}
+                    onChange={(e) => setField("city", e.target.value)}
+                  />
+                )}
+              </Field>
+              <Field id="postal_code" label="Postal code (optional)">
+                {(p) => (
+                  <Input
+                    {...p}
+                    className={input}
+                    inputMode="numeric"
+                    autoComplete="postal-code"
+                    value={form["postal_code"] ?? ""}
+                    onChange={(e) => setField("postal_code", e.target.value)}
+                  />
+                )}
+              </Field>
             </div>
-            <div>
-              <Label htmlFor="postal_code">Postal code (optional)</Label>
-              <Input
-                id="postal_code"
-                autoComplete="postal-code"
-                value={form["postal_code"] ?? ""}
-                onChange={(e) => setForm((prev) => ({ ...prev, postal_code: e.target.value }))}
-              />
-            </div>
-            <fieldset className="space-y-2 border border-border p-4">
-              <legend className="px-1 text-xs uppercase tracking-widest">Payment</legend>
+            <Field id="province" label="Province" error={errors["province"]}>
+              {(p) => (
+                <select
+                  {...p}
+                  value={form["province"] ?? ""}
+                  onChange={(e) => setField("province", e.target.value)}
+                  className="h-12 w-full border border-input bg-background px-3 text-sm"
+                >
+                  <option value="">Select province</option>
+                  {PROVINCES.map((prov) => (
+                    <option key={prov}>{prov}</option>
+                  ))}
+                </select>
+              )}
+            </Field>
+          </Section>
+
+          <Section n={3} title="Payment">
+            <fieldset className="space-y-3">
+              <legend className="sr-only">Payment method</legend>
               {codAllowed && (
-                <label className="flex items-center gap-2 text-sm">
+                <label
+                  className={`flex min-h-14 cursor-pointer items-start gap-3 border p-4 text-sm ${effectiveMethod === "cod" ? "border-primary" : "border-border"}`}
+                >
                   <input
                     type="radio"
                     name="pay"
+                    className="mt-0.5 size-4 accent-[var(--color-primary)]"
                     checked={effectiveMethod === "cod"}
                     onChange={() => setMethod("cod")}
-                  />{" "}
-                  Cash on delivery
+                  />
+                  <span>
+                    <span className="font-medium">Cash on delivery</span>
+                    <span className="mt-0.5 block text-xs text-muted-foreground">
+                      Pay the courier in cash when your parcel arrives.
+                    </span>
+                  </span>
                 </label>
               )}
               {cardAllowed && (
-                <label className="flex items-center gap-2 text-sm">
+                <label
+                  className={`flex min-h-14 cursor-pointer items-start gap-3 border p-4 text-sm ${effectiveMethod === "card" ? "border-primary" : "border-border"}`}
+                >
                   <input
                     type="radio"
                     name="pay"
+                    className="mt-0.5 size-4 accent-[var(--color-primary)]"
                     checked={effectiveMethod === "card"}
                     onChange={() => setMethod("card")}
-                  />{" "}
-                  Credit / debit card (secure checkout)
+                  />
+                  <span>
+                    <span className="font-medium">Credit / debit card</span>
+                    <span className="mt-0.5 block text-xs text-muted-foreground">
+                      You will enter your card details on Stripe&rsquo;s secure payment page.
+                    </span>
+                  </span>
                 </label>
               )}
               {!codAllowed && !cardAllowed && (
@@ -239,79 +427,120 @@ function Checkout() {
                 </p>
               )}
             </fieldset>
-            <Button
-              type="submit"
-              size="lg"
-              className="w-full"
-              disabled={busy || (!codAllowed && !cardAllowed)}
-            >
-              {busy
-                ? "Please wait…"
-                : effectiveMethod === "card"
-                  ? `Pay ${formatPrice(totals.total)}`
-                  : `Place order · ${formatPrice(totals.total)}`}
-            </Button>
-          </form>
+          </Section>
         </div>
-        <aside className="h-fit border border-border p-6">
-          <h2 className="text-sm uppercase tracking-widest">Summary</h2>
-          <ul className="mt-4 space-y-3 text-sm">
+
+        <aside className="h-fit min-w-0 space-y-6 border border-border p-6 lg:sticky lg:top-24">
+          <h2 className="flex items-baseline gap-3">
+            <span className="text-xs tabular-nums text-muted-foreground">04</span>
+            <span className="display-heading text-3xl">Order review</span>
+          </h2>
+          <ul className="divide-y divide-border">
             {items.map((i) => {
               const p = getProduct(i.productId);
               return p ? (
-                <li key={`${i.productId}${i.size}${i.color}`} className="flex justify-between">
-                  <span>
-                    {p.name} · {i.size} · {COLOR_NAMES[i.color]} × {i.quantity}
-                  </span>
-                  <span>{formatPrice(p.priceCents * i.quantity)}</span>
+                <li key={`${i.productId}${i.size}${i.color}`} className="flex gap-3 py-4 text-sm">
+                  <img
+                    src={optimizeImageUrl(p.image, 160)}
+                    alt=""
+                    width={64}
+                    height={80}
+                    loading="lazy"
+                    className="h-20 w-16 shrink-0 bg-card object-cover"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[13px] font-medium uppercase leading-snug tracking-[0.06em]">
+                      {p.name}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Size {i.size} · {COLOR_NAMES[i.color]} · Qty {i.quantity}
+                    </p>
+                  </div>
+                  <span className="tabular-nums">{formatPrice(p.priceCents * i.quantity)}</span>
                 </li>
               ) : null;
             })}
           </ul>
-          <div className="mt-4 flex gap-2">
+          <div className="flex gap-2">
             <Input
               aria-label="Discount code"
               placeholder="Discount code"
+              className="h-11"
               value={codeInput}
               onChange={(e) => setCodeInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  if (codeInput.trim()) void applyCode();
+                }
+              }}
             />
             <Button
               type="button"
               variant="outline"
+              className="h-11"
               disabled={!codeInput.trim()}
               onClick={() => void applyCode()}
             >
               Apply
             </Button>
           </div>
-          <div className="mt-4 space-y-1 border-t border-border pt-4 text-sm">
+          <div className="space-y-2 border-t border-border pt-5 text-sm">
             <div className="flex justify-between">
               <span>Subtotal</span>
-              <span>{formatPrice(totals.subtotal)}</span>
+              <span className="tabular-nums">{formatPrice(totals.subtotal)}</span>
             </div>
             {totals.discount > 0 && (
               <div className="flex justify-between">
                 <span>Discount ({applied?.code})</span>
-                <span>−{formatPrice(totals.discount)}</span>
+                <span className="tabular-nums">−{formatPrice(totals.discount)}</span>
               </div>
             )}
             <div className="flex justify-between">
               <span>Shipping</span>
-              <span>{totals.shipping ? formatPrice(totals.shipping) : "Free"}</span>
+              <span className="tabular-nums">
+                {totals.shipping ? formatPrice(totals.shipping) : "Free"}
+              </span>
             </div>
             {totals.tax > 0 && (
               <div className="flex justify-between">
                 <span>Tax</span>
-                <span>{formatPrice(totals.tax)}</span>
+                <span className="tabular-nums">{formatPrice(totals.tax)}</span>
               </div>
             )}
-            <div className="flex justify-between font-medium">
+            <div className="flex justify-between border-t border-border pt-3 text-base font-medium">
               <span>Total</span>
-              <span>{formatPrice(totals.total)}</span>
+              <span className="tabular-nums">{formatPrice(totals.total)}</span>
             </div>
           </div>
+          <Button
+            type="submit"
+            size="lg"
+            className="h-14 w-full text-xs uppercase tracking-[0.22em]"
+            disabled={busy || (!codAllowed && !cardAllowed)}
+          >
+            {busy
+              ? "Please wait…"
+              : effectiveMethod === "card"
+                ? `Pay ${formatPrice(totals.total)}`
+                : `Place order · ${formatPrice(totals.total)}`}
+          </Button>
+          <div className="space-y-2 text-xs leading-relaxed text-muted-foreground">
+            <ShippingNote className="text-xs text-muted-foreground" />
+            <p>
+              After you order, you&rsquo;ll get an order page showing its status and tracking number
+              once it ships.{" "}
+              <Link
+                to="/policies/$slug"
+                params={{ slug: "shipping-returns" }}
+                className="underline underline-offset-4"
+              >
+                Delivery &amp; returns
+              </Link>
+            </p>
+          </div>
         </aside>
-      </div>
+      </form>
     </SiteLayout>
   );
 }

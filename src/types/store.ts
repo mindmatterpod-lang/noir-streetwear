@@ -32,7 +32,8 @@ export interface CartItem {
   quantity: number;
 }
 
-export type CatalogSort = "featured" | "price-ascending" | "price-descending" | "newest";
+export type CatalogSort =
+  "featured" | "price-ascending" | "price-descending" | "newest" | "name-ascending";
 
 export const COLOR_NAMES: Record<ProductColor, string> = {
   ink: "Ink",

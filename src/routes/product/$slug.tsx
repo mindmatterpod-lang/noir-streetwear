@@ -1,28 +1,22 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { Check } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
-
 import { SiteLayout } from "@/components/layout/SiteLayout";
-import { FadeImage } from "@/components/shop/FadeImage";
+import { ProductGallery } from "@/components/shop/ProductGallery";
+import { PurchasePanel } from "@/components/shop/PurchasePanel";
+import { RelatedProducts } from "@/components/shop/RelatedProducts";
 import { Reviews } from "@/components/shop/Reviews";
 import { ShippingNote } from "@/components/shop/ShippingNote";
-import { Button } from "@/components/ui/button";
-import { useCart } from "@/hooks/use-cart";
-import { setCartOpen } from "@/hooks/use-cart-drawer";
+import { SizeGuide } from "@/components/shop/SizeGuide";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { formatPrice } from "@/lib/format";
-import { optimizeImageUrl } from "@/lib/image-tools";
+import { policyExcerpt } from "@/lib/policy-excerpts";
 import { fetchProducts } from "@/lib/products-api";
 import { getProduct } from "@/lib/store-catalog";
-import {
-  COLOR_NAMES,
-  COLOR_SWATCH,
-  PRODUCT_SIZES,
-  type ProductColor,
-  type ProductSize,
-} from "@/types/store";
-
-const SWATCH = COLOR_SWATCH;
+import { COLOR_NAMES } from "@/types/store";
 
 export const Route = createFileRoute("/product/$slug")({
   loader: async ({ params }) => {
@@ -85,120 +79,140 @@ export const Route = createFileRoute("/product/$slug")({
 
 function ProductDetail() {
   const { product } = Route.useLoaderData();
-  const { addItem } = useCart();
-  const [size, setSize] = useState<ProductSize | null>(null);
-  const [color, setColor] = useState<ProductColor>(product.colors[0] ?? "ink");
-  const [added, setAdded] = useState(false);
   const gallery = product.images ?? [
     product.image,
     ...(product.alternateImage ? [product.alternateImage] : []),
   ];
-  const [active, setActive] = useState(0);
-  const soldOut = product.stock === 0;
-  const lowStock = product.stock > 0 && product.stock <= 10;
-
-  const handleAdd = () => {
-    if (!size) {
-      toast.error("Select a size first");
-      return;
-    }
-    addItem(product, size, color, 1);
-    setAdded(true);
-    toast.success(`${product.name} added to your bag`);
-    setCartOpen(true);
-    setTimeout(() => setAdded(false), 2000);
-  };
+  const sectionTitle = "text-sm font-medium uppercase tracking-[0.18em]";
+  const prose = "text-sm leading-relaxed text-muted-foreground";
+  const sizingNote = policyExcerpt("size-guide", "How to measure");
+  const deliveryNote = policyExcerpt("shipping-returns", "Delivery across Pakistan");
+  const exchangeNote = policyExcerpt("shipping-returns", "Exchanges and returns");
 
   return (
     <SiteLayout>
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-10 sm:px-6 md:grid-cols-2">
-        <div>
-          <FadeImage
-            key={gallery[active]}
-            src={optimizeImageUrl(gallery[active] ?? product.image, 1100)}
-            alt={product.name}
-            className="aspect-[4/5] w-full object-cover"
-          />
-          {gallery.length > 1 && (
-            <div className="mt-3 flex gap-3">
-              {gallery.map((src, i) => (
-                <button
-                  key={src}
-                  onClick={() => setActive(i)}
-                  aria-label={`View image ${i + 1}`}
-                  className={`h-24 w-20 overflow-hidden border ${i === active ? "border-foreground" : "border-border"}`}
-                >
-                  <img src={optimizeImageUrl(src, 200)} alt="" className="size-full object-cover" />
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-        <div>
-          <Link
-            to="/shop"
-            search={{ category: product.category }}
-            className="text-xs uppercase tracking-widest text-muted-foreground"
-          >
-            {product.category}
-          </Link>
-          <h1 className="mt-2 text-3xl font-black uppercase">{product.name}</h1>
-          <p className="mt-2 text-xl">{formatPrice(product.priceCents)}</p>
-          <p className="mt-6 text-sm leading-relaxed text-muted-foreground">
-            {product.description}
-          </p>
-
-          <p className="mt-8 text-xs uppercase tracking-widest">Colour: {COLOR_NAMES[color]}</p>
-          <div className="mt-2 flex gap-3">
-            {product.colors.map((c) => (
-              <button
-                key={c}
-                aria-label={COLOR_NAMES[c]}
-                aria-pressed={c === color}
-                onClick={() => setColor(c)}
-                className={`size-9 rounded-full border-2 ${c === color ? "border-foreground" : "border-border"}`}
-                style={{ backgroundColor: SWATCH[c] }}
-              />
-            ))}
-          </div>
-
-          <p className="mt-8 text-xs uppercase tracking-widest">Size</p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {PRODUCT_SIZES.map((s) => (
-              <button
-                key={s}
-                aria-pressed={s === size}
-                onClick={() => setSize(s)}
-                className={`h-11 w-14 border text-sm ${s === size ? "bg-primary text-primary-foreground" : "border-border"}`}
+      <div className="page-container pb-24 pt-6 md:pb-16">
+        <nav aria-label="Breadcrumb" className="text-xs text-muted-foreground">
+          <ol className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <li>
+              <Link to="/" className="py-2 hover:text-foreground">
+                Home
+              </Link>
+            </li>
+            <li aria-hidden="true">/</li>
+            <li>
+              <Link
+                to="/shop"
+                search={{ category: product.category }}
+                className="py-2 hover:text-foreground"
               >
-                {s}
-              </button>
-            ))}
+                {product.category}
+              </Link>
+            </li>
+            <li aria-hidden="true">/</li>
+            <li aria-current="page" className="text-foreground">
+              {product.name}
+            </li>
+          </ol>
+        </nav>
+
+        <div className="mt-6 grid gap-x-14 gap-y-10 lg:grid-cols-[3fr_2fr]">
+          <div className="min-w-0 lg:col-start-1 lg:row-start-1">
+            <ProductGallery images={gallery} name={product.name} />
           </div>
 
-          <p
-            className={`mt-6 text-sm ${soldOut ? "text-destructive" : lowStock ? "text-amber-600" : "text-muted-foreground"}`}
-          >
-            {soldOut ? "Sold out" : lowStock ? `Only ${product.stock} left` : "In stock"}
-          </p>
-          <Button size="lg" className="mt-4 w-full" disabled={soldOut} onClick={handleAdd}>
-            {added ? (
-              <>
-                <Check className="animate-pop mr-2 size-4" />
-                Added to bag
-              </>
-            ) : (
-              "Add to bag"
-            )}
-          </Button>
-          {added && (
-            <p role="status" className="mt-3 border border-border bg-muted p-3 text-sm">
-              ✓ {product.name} was added to your bag.
-            </p>
-          )}
-          <ShippingNote className="mt-4 text-xs text-muted-foreground" />
+          <div className="min-w-0 lg:col-start-2 lg:row-span-2 lg:row-start-1">
+            <div className="lg:sticky lg:top-24">
+              <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
+                {product.category}
+              </p>
+              <h1 className="display-heading mt-3 text-[clamp(2.1rem,7vw,4.25rem)] [overflow-wrap:anywhere]">
+                {product.name}
+              </h1>
+              <p className="mt-4 text-xl tabular-nums">{formatPrice(product.priceCents)}</p>
+              <p className={`mt-5 ${prose}`}>{product.description}</p>
+              <div className="mt-8">
+                <PurchasePanel product={product} stickyBar />
+              </div>
+              <div className="mt-6 space-y-2 border-t border-border pt-5">
+                <ShippingNote className="text-xs leading-relaxed text-muted-foreground" />
+                <p className="text-xs text-muted-foreground">
+                  7-day exchange on unworn items.{" "}
+                  <Link
+                    to="/policies/$slug"
+                    params={{ slug: "shipping-returns" }}
+                    className="underline underline-offset-4"
+                  >
+                    Read the policy
+                  </Link>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="min-w-0 lg:col-start-1 lg:row-start-2">
+            <Accordion
+              type="multiple"
+              defaultValue={["details"]}
+              className="border-t border-border"
+            >
+              <AccordionItem value="details">
+                <AccordionTrigger className={sectionTitle}>Product details</AccordionTrigger>
+                <AccordionContent>
+                  <dl className="grid grid-cols-[max-content_1fr] gap-x-6 gap-y-2 text-sm">
+                    <dt className="text-muted-foreground">Category</dt>
+                    <dd>{product.category}</dd>
+                    {product.colors.length > 0 && (
+                      <>
+                        <dt className="text-muted-foreground">Colours</dt>
+                        <dd>{product.colors.map((c) => COLOR_NAMES[c]).join(", ")}</dd>
+                      </>
+                    )}
+                    <dt className="text-muted-foreground">Availability</dt>
+                    <dd>
+                      {product.stock <= 0
+                        ? "Sold out"
+                        : product.stock <= 10
+                          ? `Only ${product.stock} left`
+                          : "In stock"}
+                    </dd>
+                  </dl>
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="fit">
+                <AccordionTrigger className={sectionTitle}>Fit &amp; sizing</AccordionTrigger>
+                <AccordionContent>
+                  {sizingNote && <p className={prose}>{sizingNote}</p>}
+                  <SizeGuide selected={null} className="mt-2" />
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="shipping">
+                <AccordionTrigger className={sectionTitle}>
+                  Shipping &amp; delivery
+                </AccordionTrigger>
+                <AccordionContent className="space-y-3">
+                  {deliveryNote && <p className={prose}>{deliveryNote}</p>}
+                  <ShippingNote className="text-sm text-foreground" />
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="exchange">
+                <AccordionTrigger className={sectionTitle}>Exchange policy</AccordionTrigger>
+                <AccordionContent className="space-y-3">
+                  {exchangeNote && <p className={prose}>{exchangeNote}</p>}
+                  <Link
+                    to="/policies/$slug"
+                    params={{ slug: "shipping-returns" }}
+                    className="inline-block py-1 text-xs uppercase tracking-[0.18em] underline underline-offset-4"
+                  >
+                    Full delivery &amp; returns policy
+                  </Link>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
         </div>
       </div>
+      <RelatedProducts product={product} />
       <Reviews productId={product.dbId} productName={product.name} />
     </SiteLayout>
   );

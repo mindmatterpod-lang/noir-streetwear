@@ -92,7 +92,7 @@ export function Reviews({
   };
 
   return (
-    <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6" aria-labelledby="reviews-heading">
+    <section className="page-container pb-16" aria-labelledby="reviews-heading">
       <h2
         id="reviews-heading"
         className="border-t border-border pt-10 text-sm uppercase tracking-widest"
@@ -100,10 +100,34 @@ export function Reviews({
         Reviews
       </h2>
       {reviews.length > 0 && (
-        <p className="mt-2 flex items-center gap-2 text-sm">
-          <Stars value={average} /> {average.toFixed(1)} · {reviews.length}{" "}
-          {reviews.length === 1 ? "review" : "reviews"}
-        </p>
+        <div className="mt-4 flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-12">
+          <div>
+            <p className="display-heading text-6xl tabular-nums">{average.toFixed(1)}</p>
+            <div className="mt-2">
+              <Stars value={average} />
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {reviews.length} {reviews.length === 1 ? "review" : "reviews"}
+            </p>
+          </div>
+          <ul className="w-full max-w-xs space-y-1.5" aria-label="Rating distribution">
+            {[5, 4, 3, 2, 1].map((star) => {
+              const n = reviews.filter((r) => r.rating === star).length;
+              return (
+                <li key={star} className="flex items-center gap-3 text-xs">
+                  <span className="w-10 tabular-nums">{star} star</span>
+                  <span className="h-1 flex-1 bg-border">
+                    <span
+                      className="block h-full bg-foreground"
+                      style={{ width: `${(n / reviews.length) * 100}%` }}
+                    />
+                  </span>
+                  <span className="w-5 text-right tabular-nums text-muted-foreground">{n}</span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       )}
       {reviews.length === 0 && (
         <p className="mt-2 text-sm text-muted-foreground">No reviews yet.</p>
