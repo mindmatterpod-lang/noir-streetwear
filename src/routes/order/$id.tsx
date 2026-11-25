@@ -4,7 +4,6 @@ import { useEffect } from "react";
 
 import { OrderView } from "@/components/order/OrderView";
 import { SiteLayout } from "@/components/layout/SiteLayout";
-import { trackPurchaseOnce } from "@/lib/analytics";
 import { useCart } from "@/hooks/use-cart";
 import { db } from "@/lib/db";
 
@@ -59,12 +58,6 @@ function OrderPage() {
   useEffect(() => {
     if (paid) clearCart();
   }, [paid, clearCart]);
-
-  const placed = !!order && (order.payment_method === "cod" || order.payment_status === "paid");
-  useEffect(() => {
-    if (order && placed)
-      trackPurchaseOnce(order.id, order.total_cents, order.items.length, order.created_at);
-  }, [order, placed]);
 
   return (
     <SiteLayout>

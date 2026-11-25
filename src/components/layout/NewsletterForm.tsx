@@ -1,7 +1,5 @@
 import { useId, useState, type FormEvent } from "react";
 
-import { events } from "@/lib/analytics";
-
 /** Real sign-up: the server validates, stores consent and sends the welcome email. Shown on the dark footer. */
 export function NewsletterForm() {
   const id = useId();
@@ -28,7 +26,6 @@ export function NewsletterForm() {
       });
       const result = (await response.json()) as { status?: string; error?: string };
       if (!response.ok) throw new Error(result.error ?? "Something went wrong.");
-      events.newsletter();
       setMessage(
         result.status === "already"
           ? "You're already on the list."

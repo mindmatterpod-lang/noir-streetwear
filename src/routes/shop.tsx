@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Check, Search, SlidersHorizontal, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { SiteLayout } from "@/components/layout/SiteLayout";
 import { ProductCard } from "@/components/shop/ProductCard";
@@ -20,7 +20,6 @@ import {
   sortProducts,
   type CatalogFilters,
 } from "@/lib/catalog-filters";
-import { events } from "@/lib/analytics";
 import { formatPrice } from "@/lib/format";
 import { SITE_URL } from "@/lib/site-config";
 import { useProducts } from "@/lib/products-api";
@@ -156,20 +155,8 @@ function Shop() {
       : null;
   }, [products]);
 
-  const update = (next: ShopSearch) => {
-    const kind = (["category", "colors", "stock"] as const).find(
-      (k) => k in next && next[k] !== undefined,
-    );
-    if (kind) events.filter(kind);
+  const update = (next: ShopSearch) =>
     void navigate({ search: (prev) => ({ ...prev, ...next }), replace: true });
-  };
-  // One search event per pause in typing, never per keystroke.
-  useEffect(() => {
-    if (q.trim().length < 3) return;
-    const timer = setTimeout(() => events.search(q.trim().toLowerCase(), results.length), 1200);
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q]);
   const toggleColor = (c: ProductColor) => {
     const next = colors.includes(c) ? colors.filter((x) => x !== c) : [...colors, c];
     update({ colors: next.length ? next.join(",") : undefined });

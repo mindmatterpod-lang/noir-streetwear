@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { PROVINCES } from "@/lib/provinces";
 import { useAuth } from "@/hooks/use-auth";
 import { readProfile } from "@/hooks/use-profile";
-import { events } from "@/lib/analytics";
 import { EmptyBag } from "@/components/cart/EmptyBag";
 import { SiteLayout } from "@/components/layout/SiteLayout";
 import { ShippingNote } from "@/components/shop/ShippingNote";
@@ -152,13 +151,6 @@ function Checkout() {
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
-  const startedCheckout = useRef(false);
-  useEffect(() => {
-    if (startedCheckout.current || items.length === 0) return;
-    startedCheckout.current = true;
-    events.beginCheckout(items.length, subtotalCents);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items.length]);
   const setField = (key: string, value: string) => {
     setForm((prev) => {
       const next = { ...prev, [key]: value };

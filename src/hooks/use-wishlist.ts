@@ -1,7 +1,5 @@
 import { useSyncExternalStore } from "react";
 
-import { events } from "@/lib/analytics";
-
 const KEY = "nowhere-wishlist-v1";
 const EMPTY: string[] = [];
 let snapshot: string[] = EMPTY;
@@ -56,7 +54,6 @@ export function useWishlist() {
   const toggle = (slug: string) => {
     const removing = snapshot.includes(slug);
     snapshot = removing ? snapshot.filter((s) => s !== slug) : [...snapshot, slug];
-    events.wishlist(removing ? "remove" : "add", slug);
     persist();
   };
   return { slugs, has: (slug: string) => slugs.includes(slug), toggle };

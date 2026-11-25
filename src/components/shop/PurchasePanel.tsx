@@ -6,7 +6,6 @@ import { SizeGuide } from "@/components/shop/SizeGuide";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/use-cart";
 import { openCartWithMessage } from "@/hooks/use-cart-drawer";
-import { events } from "@/lib/analytics";
 import { formatPrice } from "@/lib/format";
 import {
   COLOR_NAMES,
@@ -75,7 +74,6 @@ export function PurchasePanel({
     }
     const toAdd = Math.min(quantity, maxQuantity - inBag);
     addItem(product, size, color, toAdd);
-    events.addToCart(product, toAdd);
     setError(null);
     setAdded(true);
     clearTimeout(timer.current);

@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { sanitizeParams } from "@/lib/analytics";
 import { isPlaceholder, supportMessages, whatsappDigits, whatsappLink } from "@/lib/contact";
 import { buildTimeline, orderNumber } from "@/lib/order-status";
 import { createRateLimiter } from "@/lib/rate-limit.server";
@@ -26,26 +25,6 @@ describe("contact helpers", () => {
     );
     expect(url).not.toContain(" ");
     expect(url).not.toContain("&Co");
-  });
-});
-
-describe("analytics sanitizeParams", () => {
-  it("drops personal data and non-primitive values", () => {
-    const out = sanitizeParams({
-      item_id: "studio-hoodie",
-      email: "a@b.co",
-      phone: "03001234567",
-      customer_name: "Ali",
-      shipping_address: "House 1",
-      value: 6499,
-      nested: { a: 1 },
-      note: "call me on 03001234567",
-      contact: "ali@example.com",
-    });
-    expect(out).toEqual({ item_id: "studio-hoodie", value: 6499 });
-  });
-  it("caps the number of properties", () => {
-    expect(Object.keys(sanitizeParams({ a: 1, b: 2, c: 3, d: 4, e: 5, f: 6 }))).toHaveLength(4);
   });
 });
 

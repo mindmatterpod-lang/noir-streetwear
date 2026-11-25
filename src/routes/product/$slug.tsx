@@ -1,5 +1,4 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useEffect } from "react";
 import { SiteLayout } from "@/components/layout/SiteLayout";
 import { ProductGallery } from "@/components/shop/ProductGallery";
 import { PurchasePanel } from "@/components/shop/PurchasePanel";
@@ -23,7 +22,6 @@ import {
   productJsonLd,
 } from "@/lib/seo";
 import { SITE_URL } from "@/lib/site-config";
-import { events } from "@/lib/analytics";
 import { supportMessages } from "@/lib/contact";
 import { WhatsAppButton } from "@/components/support/WhatsAppButton";
 import { fetchProducts } from "@/lib/products-api";
@@ -76,9 +74,6 @@ export const Route = createFileRoute("/product/$slug")({
 
 function ProductDetail() {
   const { product } = Route.useLoaderData();
-  useEffect(() => {
-    events.viewItem(product);
-  }, [product]);
   const gallery = product.images ?? [
     product.image,
     ...(product.alternateImage ? [product.alternateImage] : []),

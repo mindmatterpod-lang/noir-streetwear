@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/sheet";
 import { useCart } from "@/hooks/use-cart";
 import { useCartDrawer } from "@/hooks/use-cart-drawer";
-import { events } from "@/lib/analytics";
 import { optimizeImageUrl } from "@/lib/image-tools";
 import { formatPrice } from "@/lib/format";
 import { getProduct } from "@/lib/store-catalog";
@@ -64,10 +63,7 @@ export function CartLines({ onNavigate }: { onNavigate?: () => void }) {
                 <button
                   type="button"
                   aria-label={`Remove ${product.name}, size ${item.size}, ${COLOR_NAMES[item.color]}`}
-                  onClick={() => {
-                    events.removeFromCart(product.slug, item.quantity);
-                    removeItem(item.productId, item.size, item.color);
-                  }}
+                  onClick={() => removeItem(item.productId, item.size, item.color)}
                   className="-mr-2 -mt-2 flex size-11 shrink-0 items-center justify-center"
                 >
                   <X className="size-4" />
