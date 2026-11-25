@@ -12,9 +12,7 @@ You have three ways to add photos in Admin -> Products. Linked images use no Sup
 Tips: use the star on a thumbnail to make it the main photo. Use square or 4:5 portrait photos, 1200-1600 px wide.
 
 ## Cloudinary quick start
-
 Create a free account, open Media Library, upload, then copy the image's URL. Folder per product keeps things tidy.
 
 ## ImageKit quick start
-
 Create a free account, open Media Library, upload, then copy the image's URL (it starts with ik.imagekit.io).
