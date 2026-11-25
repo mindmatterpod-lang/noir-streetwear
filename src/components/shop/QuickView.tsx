@@ -17,10 +17,12 @@ export default function QuickView({
   product,
   open,
   onOpenChange,
+  onAdded,
 }: {
   product: Product;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onAdded?: () => void;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -44,7 +46,13 @@ export default function QuickView({
               </DialogDescription>
             </DialogHeader>
             <div className="mt-6">
-              <PurchasePanel product={product} onAdded={() => onOpenChange(false)} />
+              <PurchasePanel
+                product={product}
+                onAdded={() => {
+                  onAdded?.();
+                  onOpenChange(false);
+                }}
+              />
             </div>
             <Link
               to="/product/$slug"

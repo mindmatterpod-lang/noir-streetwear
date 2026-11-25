@@ -5,7 +5,11 @@ import { useEffect, useState, type ReactNode } from "react";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { Logo } from "@/components/brand/Logo";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
+import { NewsletterForm } from "@/components/layout/NewsletterForm";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
+import { WishlistSync } from "@/components/layout/WishlistSync";
+import { WhatsAppButton } from "@/components/support/WhatsAppButton";
+import { supportMessages } from "@/lib/contact";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/use-auth";
 import { useCart } from "@/hooks/use-cart";
@@ -128,6 +132,7 @@ function Footer() {
     "inline-block py-0.5 text-sm text-[var(--nw-mute)] transition-colors hover:text-[var(--nw-paper)]";
   return (
     <footer className="border-t border-border bg-[var(--nw-ink)] text-[var(--nw-paper)]">
+      <NewsletterForm />
       <div className="page-container grid gap-12 py-14 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr] lg:py-20">
         <div>
           <Logo className="h-[18px]" />
@@ -160,6 +165,11 @@ function Footer() {
         <nav aria-label="Footer help">
           <h2 className={colTitle}>Help</h2>
           <ul className="mt-5 space-y-3">
+            <li>
+              <Link to="/track" className={link}>
+                Track your order
+              </Link>
+            </li>
             {HELP_LINKS.map(([slug, label]) => (
               <li key={slug}>
                 <Link to="/policies/$slug" params={{ slug }} className={link}>
@@ -167,6 +177,13 @@ function Footer() {
                 </Link>
               </li>
             ))}
+            <li>
+              <WhatsAppButton
+                message={supportMessages.general()}
+                label="WhatsApp"
+                className="mt-2 border-[var(--nw-line)] text-[var(--nw-paper)] hover:bg-[var(--nw-ink-2)]"
+              />
+            </li>
           </ul>
         </nav>
         {SOCIAL_LINKS.length > 0 && (
@@ -271,6 +288,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
       <main className="animate-page-in flex-1">{children}</main>
       <Footer />
       <CartDrawer />
+      <WishlistSync />
     </div>
   );
 }

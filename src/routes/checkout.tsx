@@ -3,6 +3,10 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { toast } from "sonner";
 
+import { PROVINCES } from "@/lib/provinces";
+import { useAuth } from "@/hooks/use-auth";
+import { readProfile } from "@/hooks/use-profile";
+import { events } from "@/lib/analytics";
 import { EmptyBag } from "@/components/cart/EmptyBag";
 import { SiteLayout } from "@/components/layout/SiteLayout";
 import { ShippingNote } from "@/components/shop/ShippingNote";
@@ -25,16 +29,6 @@ export const Route = createFileRoute("/checkout")({
   }),
   component: Checkout,
 });
-
-const PROVINCES = [
-  "Punjab",
-  "Sindh",
-  "Khyber Pakhtunkhwa",
-  "Balochistan",
-  "Islamabad Capital Territory",
-  "Gilgit-Baltistan",
-  "Azad Jammu & Kashmir",
-] as const;
 
 const DRAFT_KEY = "nowhere-checkout-v1";
 
@@ -111,6 +105,9 @@ function Checkout() {
   const { items, subtotalCents, clearCart } = useCart();
   const navigate = useNavigate();
   const { data: settings } = useStoreSettings();
+  const { user } = useAuth();
+  const profile = readProfile(user);
+  const prefilled = useRef(false);
   const { data: config } = useQuery({
     queryKey: ["api-config"],
     staleTime: 300_000,
@@ -122,6 +119,7 @@ function Checkout() {
   const [errors, setErrors] = useState<Form>({});
   const [method, setMethod] = useState<"cod" | "card">("cod");
   const [codeInput, setCodeInput] = useState("");
+  const [codeMessage, setCodeMessage] = useState<{ ok: boolean; text: string } | null>(null);
   const [applied, setApplied] = useState<{ code: string; cents: number } | null>(null);
 
   // Keep what the customer typed if they leave and come back (this tab only; cleared after the order).
@@ -133,6 +131,34 @@ function Checkout() {
       // No saved draft.
     }
   }, []);
+  // Signed-in customers start with their saved details (never overwriting anything already typed).
+  useEffect(() => {
+    if (!user || prefilled.current) return;
+    prefilled.current = true;
+    const first = profile.addresses[0];
+    setForm((prev) => ({
+      name: profile.name,
+      phone: profile.phone,
+      email: user.email ?? "",
+      ...(first
+        ? {
+            address: first.address,
+            city: first.city,
+            province: first.province,
+            postal_code: first.postal_code,
+          }
+        : {}),
+      ...Object.fromEntries(Object.entries(prev).filter(([, v]) => v)),
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+  const startedCheckout = useRef(false);
+  useEffect(() => {
+    if (startedCheckout.current || items.length === 0) return;
+    startedCheckout.current = true;
+    events.beginCheckout(items.length, subtotalCents);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items.length]);
   const setField = (key: string, value: string) => {
     setForm((prev) => {
       const next = { ...prev, [key]: value };
@@ -161,17 +187,26 @@ function Checkout() {
   );
 
   const applyCode = async () => {
+    setCodeMessage(null);
     const { data, error } = await db.rpc("preview_discount", {
       p_code: codeInput,
       p_subtotal: subtotalCents,
     });
     if (error) {
       setApplied(null);
-      toast.error(error.message.replace(/^.*?:\s*/, ""));
+      setCodeMessage({ ok: false, text: error.message.replace(/^.*?:\s*/, "") });
       return;
     }
     setApplied({ code: codeInput.trim().toUpperCase(), cents: data as number });
-    toast.success("Discount applied");
+    setCodeMessage({
+      ok: true,
+      text: "Code applied. The final amount is confirmed when you place the order.",
+    });
+  };
+  const removeCode = () => {
+    setApplied(null);
+    setCodeInput("");
+    setCodeMessage(null);
   };
 
   const placeOrder = async (e: FormEvent) => {
@@ -327,6 +362,33 @@ function Checkout() {
           </Section>
 
           <Section n={2} title="Delivery address">
+            {profile.addresses.length > 0 && (
+              <div>
+                <Label htmlFor="saved-address" className="text-xs uppercase tracking-[0.14em]">
+                  Saved addresses
+                </Label>
+                <select
+                  id="saved-address"
+                  defaultValue=""
+                  onChange={(e) => {
+                    const a = profile.addresses.find((x) => x.id === e.target.value);
+                    if (!a) return;
+                    setField("address", a.address);
+                    setField("city", a.city);
+                    setField("province", a.province);
+                    setField("postal_code", a.postal_code);
+                  }}
+                  className="mt-2 h-12 w-full border border-input bg-background px-3 text-sm"
+                >
+                  <option value="">Use a saved address</option>
+                  {profile.addresses.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.label || a.address}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             <Field id="address" label="Address (house, street, area)" error={errors["address"]}>
               {(p) => (
                 <Input
@@ -461,29 +523,54 @@ function Checkout() {
               ) : null;
             })}
           </ul>
-          <div className="flex gap-2">
-            <Input
-              aria-label="Discount code"
-              placeholder="Discount code"
-              className="h-11"
-              value={codeInput}
-              onChange={(e) => setCodeInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  if (codeInput.trim()) void applyCode();
-                }
-              }}
-            />
-            <Button
-              type="button"
-              variant="outline"
-              className="h-11"
-              disabled={!codeInput.trim()}
-              onClick={() => void applyCode()}
-            >
-              Apply
-            </Button>
+          <div>
+            {applied ? (
+              <div className="flex items-center justify-between gap-3 border border-border p-3 text-sm">
+                <span>
+                  Code <strong>{applied.code}</strong> applied
+                </span>
+                <button
+                  type="button"
+                  onClick={removeCode}
+                  className="min-h-11 text-xs uppercase tracking-[0.14em] underline underline-offset-4"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <Input
+                  aria-label="Discount code"
+                  placeholder="Discount code"
+                  className="h-11"
+                  value={codeInput}
+                  onChange={(e) => setCodeInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      if (codeInput.trim()) void applyCode();
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-11"
+                  disabled={!codeInput.trim()}
+                  onClick={() => void applyCode()}
+                >
+                  Apply
+                </Button>
+              </div>
+            )}
+            {codeMessage && (
+              <p
+                role={codeMessage.ok ? "status" : "alert"}
+                className={`mt-2 text-xs ${codeMessage.ok ? "text-muted-foreground" : "text-destructive"}`}
+              >
+                {codeMessage.text}
+              </p>
+            )}
           </div>
           <div className="space-y-2 border-t border-border pt-5 text-sm">
             <div className="flex justify-between">

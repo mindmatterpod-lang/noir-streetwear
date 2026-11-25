@@ -1,6 +1,8 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 
 import { SiteLayout } from "@/components/layout/SiteLayout";
+import { WhatsAppButton } from "@/components/support/WhatsAppButton";
+import { supportEmail, supportMessages } from "@/lib/contact";
 import { POLICIES } from "@/lib/policies";
 
 export const Route = createFileRoute("/policies/$slug")({
@@ -20,6 +22,8 @@ export const Route = createFileRoute("/policies/$slug")({
 
 function PolicyPage() {
   const { policy } = Route.useLoaderData();
+  const { slug } = Route.useParams();
+  const email = supportEmail();
   return (
     <SiteLayout>
       <article className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
@@ -60,6 +64,37 @@ function PolicyPage() {
             ))}
           </section>
         ))}
+        {slug === "contact" && (
+          <section aria-labelledby="support-actions" className="mt-12 border-t border-border pt-8">
+            <h2 id="support-actions" className="text-sm font-semibold uppercase tracking-widest">
+              Get help
+            </h2>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <WhatsAppButton message={supportMessages.general()} label="Chat on WhatsApp" />
+              {email && (
+                <a
+                  href={`mailto:${email}`}
+                  className="inline-flex min-h-11 items-center border border-border px-4 text-xs font-medium uppercase tracking-[0.16em] hover:bg-secondary"
+                >
+                  Email us
+                </a>
+              )}
+              <Link
+                to="/track"
+                className="inline-flex min-h-11 items-center border border-border px-4 text-xs font-medium uppercase tracking-[0.16em] hover:bg-secondary"
+              >
+                Track an order
+              </Link>
+              <Link
+                to="/policies/$slug"
+                params={{ slug: "size-guide" }}
+                className="inline-flex min-h-11 items-center border border-border px-4 text-xs font-medium uppercase tracking-[0.16em] hover:bg-secondary"
+              >
+                Size guide
+              </Link>
+            </div>
+          </section>
+        )}
       </article>
     </SiteLayout>
   );

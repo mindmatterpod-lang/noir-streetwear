@@ -2,7 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { OrdersPanel } from "@/components/admin/OrdersPanel";
+import { CampaignsPanel } from "@/components/admin/CampaignsPanel";
 import { DiscountsPanel } from "@/components/admin/DiscountsPanel";
+import { InsightsPanel } from "@/components/admin/InsightsPanel";
+import { ReviewsPanel } from "@/components/admin/ReviewsPanel";
+import { SubscribersPanel } from "@/components/admin/SubscribersPanel";
 import { ProductsPanel } from "@/components/admin/ProductsPanel";
 import { SettingsPanel } from "@/components/admin/SettingsPanel";
 import { Button } from "@/components/ui/button";
@@ -36,7 +40,16 @@ function FakeNotFound() {
 function AdminPortal() {
   const { user, loading } = useAuth();
   const { isAdmin, checked } = useIsAdmin(user?.id);
-  const [tab, setTab] = useState<"orders" | "products" | "discounts" | "settings">("orders");
+  const [tab, setTab] = useState<
+    | "orders"
+    | "products"
+    | "discounts"
+    | "campaigns"
+    | "subscribers"
+    | "reviews"
+    | "insights"
+    | "settings"
+  >("orders");
   const { signOut } = useAuth();
 
   if (loading || !checked) return <div className="min-h-screen bg-background" />;
@@ -51,8 +64,19 @@ function AdminPortal() {
           Sign out
         </Button>
       </div>
-      <div className="mt-6 flex gap-2">
-        {(["orders", "products", "discounts", "settings"] as const).map((t) => (
+      <div className="mt-6 flex flex-wrap gap-2">
+        {(
+          [
+            "orders",
+            "products",
+            "discounts",
+            "campaigns",
+            "subscribers",
+            "reviews",
+            "insights",
+            "settings",
+          ] as const
+        ).map((t) => (
           <Button
             key={t}
             variant={tab === t ? "default" : "outline"}
@@ -70,6 +94,14 @@ function AdminPortal() {
           <ProductsPanel />
         ) : tab === "discounts" ? (
           <DiscountsPanel />
+        ) : tab === "campaigns" ? (
+          <CampaignsPanel />
+        ) : tab === "subscribers" ? (
+          <SubscribersPanel />
+        ) : tab === "reviews" ? (
+          <ReviewsPanel />
+        ) : tab === "insights" ? (
+          <InsightsPanel />
         ) : (
           <SettingsPanel />
         )}

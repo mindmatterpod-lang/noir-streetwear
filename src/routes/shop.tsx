@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Check, Search, SlidersHorizontal, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { SiteLayout } from "@/components/layout/SiteLayout";
 import { ProductCard } from "@/components/shop/ProductCard";
@@ -20,7 +20,9 @@ import {
   sortProducts,
   type CatalogFilters,
 } from "@/lib/catalog-filters";
+import { events } from "@/lib/analytics";
 import { formatPrice } from "@/lib/format";
+import { SITE_URL } from "@/lib/site-config";
 import { useProducts } from "@/lib/products-api";
 import {
   CORE_CATEGORIES,
@@ -80,12 +82,42 @@ export const Route = createFileRoute("/shop")({
     if (search["stock"] === 1 || search["stock"] === "1") result.stock = 1;
     return result;
   },
-  head: () => ({
-    meta: [
-      { title: "Shop — Nowhere" },
-      { name: "description", content: "Browse hoodies, tracksuits, jackets, trousers and shirts." },
-    ],
-  }),
+  head: ({ match }) => {
+    const search = match.search as ShopSearch;
+    const category = search.category;
+    const title = category ? `${category} — Nowhere` : "Shop all pieces — Nowhere";
+    const description = category
+      ? `Shop NOWHERE ${category.toLowerCase()}: premium contemporary streetwear designed in Pakistan.`
+      : "Browse hoodies, tracksuits, jackets, trousers and shirts from NOWHERE.";
+    // Filtered, searched and sorted views are duplicates of the main collection page, so they are kept out of search results.
+    const filtered = !!(
+      search.q ||
+      search.colors ||
+      search.min !== undefined ||
+      search.max !== undefined ||
+      search.stock ||
+      search.sort
+    );
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        {
+          property: "og:url",
+          content: `${SITE_URL}/shop${category ? `?category=${encodeURIComponent(category)}` : ""}`,
+        },
+        ...(filtered ? [{ name: "robots", content: "noindex,follow" }] : []),
+      ],
+      links: [
+        {
+          rel: "canonical",
+          href: `${SITE_URL}/shop${category ? `?category=${encodeURIComponent(category)}` : ""}`,
+        },
+      ],
+    };
+  },
   component: Shop,
 });
 
@@ -124,8 +156,20 @@ function Shop() {
       : null;
   }, [products]);
 
-  const update = (next: ShopSearch) =>
+  const update = (next: ShopSearch) => {
+    const kind = (["category", "colors", "stock"] as const).find(
+      (k) => k in next && next[k] !== undefined,
+    );
+    if (kind) events.filter(kind);
     void navigate({ search: (prev) => ({ ...prev, ...next }), replace: true });
+  };
+  // One search event per pause in typing, never per keystroke.
+  useEffect(() => {
+    if (q.trim().length < 3) return;
+    const timer = setTimeout(() => events.search(q.trim().toLowerCase(), results.length), 1200);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q]);
   const toggleColor = (c: ProductColor) => {
     const next = colors.includes(c) ? colors.filter((x) => x !== c) : [...colors, c];
     update({ colors: next.length ? next.join(",") : undefined });

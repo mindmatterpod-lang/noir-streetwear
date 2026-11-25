@@ -1,4 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { SiteLayout } from "@/components/layout/SiteLayout";
 import { ProductGallery } from "@/components/shop/ProductGallery";
 import { PurchasePanel } from "@/components/shop/PurchasePanel";
@@ -14,6 +15,17 @@ import {
 } from "@/components/ui/accordion";
 import { formatPrice } from "@/lib/format";
 import { policyExcerpt } from "@/lib/policy-excerpts";
+import {
+  absoluteUrl,
+  breadcrumbJsonLd,
+  fetchRatingSummary,
+  jsonLdScript,
+  productJsonLd,
+} from "@/lib/seo";
+import { SITE_URL } from "@/lib/site-config";
+import { events } from "@/lib/analytics";
+import { supportMessages } from "@/lib/contact";
+import { WhatsAppButton } from "@/components/support/WhatsAppButton";
 import { fetchProducts } from "@/lib/products-api";
 import { getProduct } from "@/lib/store-catalog";
 import { COLOR_NAMES } from "@/types/store";
@@ -23,62 +35,50 @@ export const Route = createFileRoute("/product/$slug")({
     await fetchProducts().catch(() => []);
     const product = getProduct(params.slug);
     if (!product) throw notFound();
-    return { product };
+    const rating = await fetchRatingSummary(product.dbId);
+    return { product, rating };
   },
   head: ({ loaderData }) => {
     const product = loaderData?.product;
+    if (!product) return { meta: [{ title: "Product — Nowhere" }] };
+    const url = `${SITE_URL}/product/${product.slug}`;
+    const description = product.description.slice(0, 155);
     return {
       meta: [
-        { title: `${product?.name ?? "Product"} — Nowhere` },
-        { name: "description", content: product?.description.slice(0, 155) ?? "" },
-        { property: "og:title", content: product?.name ?? "Product" },
+        { title: `${product.name} — Nowhere` },
+        { name: "description", content: description },
+        { property: "og:title", content: product.name },
+        { property: "og:description", content: description },
         { property: "og:type", content: "product" },
+        { property: "og:url", content: url },
+        { property: "og:image", content: absoluteUrl(product.image) },
+        { property: "product:price:amount", content: (product.priceCents / 100).toFixed(2) },
+        { property: "product:price:currency", content: "PKR" },
       ],
-      scripts: product
-        ? [
+      links: [{ rel: "canonical", href: url }],
+      scripts: [
+        jsonLdScript(productJsonLd(product, loaderData?.rating ?? null)),
+        jsonLdScript(
+          breadcrumbJsonLd([
+            { name: "Home", path: "/" },
             {
-              type: "application/ld+json",
-              children: JSON.stringify({
-                "@context": "https://schema.org",
-                "@type": "Product",
-                name: product.name,
-                description: product.description,
-                category: product.category,
-                sku: product.slug,
-                offers: {
-                  "@type": "Offer",
-                  priceCurrency: "PKR",
-                  price: (product.priceCents / 100).toFixed(2),
-                  availability:
-                    product.stock > 0
-                      ? "https://schema.org/InStock"
-                      : "https://schema.org/OutOfStock",
-                },
-              }),
+              name: product.category,
+              path: `/shop?category=${encodeURIComponent(product.category)}`,
             },
-          ]
-        : [],
+            { name: product.name, path: `/product/${product.slug}` },
+          ]),
+        ),
+      ],
     };
   },
-  notFoundComponent: () => (
-    <SiteLayout>
-      <div className="py-24 text-center">
-        <h1 className="text-2xl font-black uppercase">Piece not found</h1>
-        <Link
-          to="/shop"
-          search={{ category: "All pieces" }}
-          className="mt-4 inline-block underline"
-        >
-          Back to shop
-        </Link>
-      </div>
-    </SiteLayout>
-  ),
   component: ProductDetail,
 });
 
 function ProductDetail() {
   const { product } = Route.useLoaderData();
+  useEffect(() => {
+    events.viewItem(product);
+  }, [product]);
   const gallery = product.images ?? [
     product.image,
     ...(product.alternateImage ? [product.alternateImage] : []),
@@ -146,6 +146,16 @@ function ProductDetail() {
                     Read the policy
                   </Link>
                 </p>
+                <div className="flex flex-wrap gap-2 pt-2">
+                  <WhatsAppButton
+                    message={supportMessages.size(product.name)}
+                    label="Help with sizing"
+                  />
+                  <WhatsAppButton
+                    message={supportMessages.product(product.name)}
+                    label="Ask about this piece"
+                  />
+                </div>
               </div>
             </div>
           </div>

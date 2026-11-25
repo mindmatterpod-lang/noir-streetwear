@@ -124,13 +124,13 @@ export const POLICIES: Record<string, Policy> = {
       {
         heading: "What we collect",
         body: [
-          "Account details (email), order details (name, mobile number, delivery address, items purchased), and basic site analytics. Card payments are handled by our payment provider; we do not store card numbers.",
+          "Account details (email, name, mobile number, saved addresses and saved pieces), order details (name, mobile number, delivery address, items purchased), your email address if you join our newsletter (with the date you agreed), and basic site analytics. Card payments are handled by our payment provider; we do not store card numbers.",
         ],
       },
       {
         heading: "How we use it",
         body: [
-          "To process and deliver orders, send order emails, provide support, prevent fraud and improve the store. We do not sell your personal data.",
+          "To process and deliver orders, send order emails, provide support, prevent fraud and improve the store. We send marketing emails only if you subscribed, and every one includes an unsubscribe link. We do not sell your personal data.",
         ],
       },
       {
@@ -142,7 +142,7 @@ export const POLICIES: Record<string, Policy> = {
       {
         heading: "Cookies and storage",
         body: [
-          "We store your bag, wishlist and theme choice in your browser, and use privacy-friendly analytics to understand site performance.",
+          "We store your bag, saved pieces, recently viewed pieces and theme choice in your browser. We use privacy-friendly, cookie-free analytics to understand site performance and which pieces are popular; these events never include your name, email, phone number or address.",
         ],
       },
       {

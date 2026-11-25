@@ -262,6 +262,7 @@
 
 /* Editorial headings: large condensed uppercase. */
 @utility display-heading {
+  overflow-wrap: anywhere;
   font-family: var(--font-display);
   text-transform: uppercase;
   font-weight: 400;

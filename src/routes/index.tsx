@@ -8,7 +8,9 @@ import { ProductCard } from "@/components/shop/ProductCard";
 import heroImage from "@/assets/collection-campaign.jpg";
 import { optimizeImageUrl } from "@/lib/image-tools";
 import { useProducts } from "@/lib/products-api";
+import { jsonLdScript, organizationJsonLd, websiteJsonLd } from "@/lib/seo";
 import { SITE_URL } from "@/lib/site-config";
+import { CampaignBanner } from "@/components/home/CampaignBanner";
 import { CORE_CATEGORIES, type Product } from "@/types/store";
 
 const TITLE = "NOWHERE | Premium Streetwear Pakistan";
@@ -25,6 +27,7 @@ export const Route = createFileRoute("/")({
       { property: "og:url", content: `${SITE_URL}/` },
     ],
     links: [{ rel: "canonical", href: `${SITE_URL}/` }],
+    scripts: [jsonLdScript(organizationJsonLd()), jsonLdScript(websiteJsonLd())],
   }),
   component: Index,
 });
@@ -131,6 +134,8 @@ function Index() {
           </div>
         </div>
       </section>
+
+      <CampaignBanner />
 
       {/* CATEGORIES */}
       <section id="collections" className="page-container py-16 md:py-24">

@@ -75,11 +75,70 @@ async function loadEmailOrder(orderId: string): Promise<EmailOrder | null> {
   };
 }
 
-export async function notifyOrder(orderId: string, kind: OrderEmailKind, origin: string) {
+const recentlySent = new Map<string, number>();
+const DEDUPE_MS = 10 * 60_000;
+
+/**
+ * Reserves (order, kind, channel) in notification_log so a status email can only be sent once, even across server
+ * instances. Returns "untracked" when the table has not been created yet, in which case only the in-memory guard applies.
+ */
+async function claimNotification(
+  orderId: string,
+  kind: string,
+): Promise<"claimed" | "duplicate" | "untracked"> {
+  const row = { order_id: orderId, kind, channel: "email" };
+  const { error } = await admin.from("notification_log").insert({ ...row, status: "sending" });
+  if (!error) return "claimed";
+  if (error.code === "23505") {
+    // Already logged: only a previously failed attempt may be retried.
+    const { data } = await admin
+      .from("notification_log")
+      .update({ status: "sending", error: null })
+      .match(row)
+      .eq("status", "failed")
+      .select("id");
+    return data?.length ? "claimed" : "duplicate";
+  }
+  return "untracked";
+}
+
+async function settleNotification(orderId: string, kind: string, ok: boolean) {
+  await admin
+    .from("notification_log")
+    .update(
+      ok
+        ? { status: "sent", sent_at: new Date().toISOString(), error: null }
+        : { status: "failed", error: "provider did not accept the message" },
+    )
+    .match({ order_id: orderId, kind, channel: "email" });
+}
+
+/** Sends one order email. `resend` lets an admin deliberately send the same message again. */
+export async function notifyOrder(
+  orderId: string,
+  kind: OrderEmailKind,
+  origin: string,
+  resend = false,
+) {
+  const key = `${orderId}:${kind}`;
+  if (!resend && (recentlySent.get(key) ?? 0) > Date.now() - DEDUPE_MS) return false;
+  let claim: "claimed" | "duplicate" | "untracked" = "untracked";
+  if (!resend) {
+    claim = await claimNotification(orderId, kind);
+    if (claim === "duplicate") return false;
+  }
+  recentlySent.set(key, Date.now());
   const order = await loadEmailOrder(orderId);
-  if (!order) return false;
-  const { subject, html } = renderOrderEmail(order, kind, origin);
-  return sendEmail(order.shipping_email, subject, html);
+  const sent = order
+    ? await (async () => {
+        const { subject, html } = renderOrderEmail(order, kind, origin);
+        return sendEmail(order.shipping_email, subject, html);
+      })()
+    : false;
+  if (!sent) recentlySent.delete(key);
+  if (claim === "claimed") await settleNotification(orderId, kind, sent);
+  console.log(`[notify] order ${orderId.slice(0, 8)} ${kind}: ${sent ? "sent" : "not sent"}`);
+  return sent;
 }
 
 export function configResponse() {
@@ -205,7 +264,7 @@ export async function handleOrderStatusNotify(request: Request): Promise<Respons
     .maybeSingle();
   if (!role) return json({ error: "Forbidden" }, 403);
   const body = z
-    .object({ orderId: z.string().uuid() })
+    .object({ orderId: z.string().uuid(), resend: z.boolean().optional() })
     .safeParse(await request.json().catch(() => null));
   if (!body.success) return json({ error: "Bad request" }, 400);
   const { data: order } = await admin
@@ -220,6 +279,7 @@ export async function handleOrderStatusNotify(request: Request): Promise<Respons
     body.data.orderId,
     status as OrderEmailKind,
     new URL(request.url).origin,
+    body.data.resend === true,
   );
   return json({ sent });
 }

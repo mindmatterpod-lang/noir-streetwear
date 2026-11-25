@@ -130,7 +130,12 @@ export function Reviews({
         </div>
       )}
       {reviews.length === 0 && (
-        <p className="mt-2 text-sm text-muted-foreground">No reviews yet.</p>
+        <div className="mt-4">
+          <p className="display-heading text-3xl">Be the first to review.</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Your experience helps others discover their next favourite piece.
+          </p>
+        </div>
       )}
       <ul className="mt-6 space-y-6">
         {reviews.map((r) => (
